@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Scrapbook - 我們的小組手帳</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 圖示 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#fbf9f4',      /* 米白底色 */
+                        'milktea': '#d4b59e',    /* 奶茶色 */
+                        'milktea-dark': '#b9957a',
+                        'morandi': '#a3b19b',    /* 莫蘭迪綠 */
+                        'morandi-dark': '#88997e',
+                        'ink': '#4a433d'         /* 墨水深灰棕 */
+                    },
+                    fontFamily: {
+                        'sans': ['"Noto Sans TC"', 'sans-serif'],
+                        'handwriting': ['"Caveat"', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #fbf9f4;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h18v2H22v18h-2V22H0v-2h20.5z' fill='%23e5e0d8' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: #4a433d;
+        }
+
+        /* 隱藏捲軸但保持可捲動 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #d4b59e;
+            border-radius: 20px;
+        }
+
+        /* 拍立得與卡片陰影 */
+        .card-shadow {
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-shadow:hover {
+            transform: translateY(-2px);
+            box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .polaroid {
+            background: white;
+            padding: 12px 12px 40px 12px;
+            box-shadow: 3px 4px 10px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        /* 紙膠帶裝飾 */
+        .washi-tape {
+            position: absolute;
+            width: 100px;
+            height: 25px;
+            background-color: rgba(163, 177, 155, 0.7);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .tape-1 { top: -10px; left: 50%; transform: translateX(-50%) rotate(-2deg); }
+        .tape-2 { top: -12px; left: -10px; transform: rotate(-35deg); width: 80px; background-color: rgba(212, 181, 158, 0.7); }
+        .tape-3 { top: -10px; right: -10px; transform: rotate(25deg); width: 80px; background-color: rgba(245, 230, 204, 0.8); }
+
+        /* 瀑布流版面 */
+        .masonry {
+            column-count: 1;
+            column-gap: 1.5rem;
+        }
+        @media (min-width: 640px) { .masonry { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry { column-count: 3; } }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 彈窗遮罩 */
+        .modal-overlay {
+            background-color: rgba(74, 67, 61, 0.5);
+            backdrop-filter: blur(2px);
+        }
+        
+        .tab-btn.active {
+            border-bottom: 4px solid #a3b19b;
+            color: #4a433d;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-20">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-book-open text-morandi text-2xl"></i>
+                <h1 class="text-2xl font-bold text-ink">我們的手帳 <span class="text-milktea font-handwriting text-3xl">Scrapbook</span></h1>
+            </div>
+            
+            <nav class="flex space-x-1 w-full md:w-auto overflow-x-auto">
+                <button onclick="switchTab('proposals')" id="nav-proposals" class="tab-btn active px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors">
+                    <i class="fa-regular fa-calendar-check mr-1"></i> 每月提案
+                </button>
+                <button onclick="switchTab('records')" id="nav-records" class="tab-btn px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-camera-retro mr-1"></i> 活動紀錄
+                </button>
+                <button onclick="switchTab('updates')" id="nav-updates" class="tab-btn px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors">
+                    <i class="fa-regular fa-comment-dots mr-1"></i> 日常動態
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        
+        <!-- 區塊 1: 每月聚會提案區 -->
+        <section id="sec-proposals" class="block">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-seedling text-morandi"></i> 聚會提案板
+                </h2>
+                <button onclick="openModal('proposal-modal')" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-full font-medium transition-colors shadow-sm">
+                    + 新增提案
+                </button>
+            </div>
+            <div id="proposals-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </section>
+
+        <!-- 區塊 2: 活動素材與紀錄區 -->
+        <section id="sec-records" class="hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-images text-milktea"></i> 相片與素材牆
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="openModal('material-modal')" class="bg-white border-2 border-morandi text-morandi hover:bg-morandi hover:text-white px-4 py-2 rounded-full font-medium transition-colors shadow-sm">
+                        + 素材/連結
+                    </button>
+                    <button onclick="openModal('photo-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-4 py-2 rounded-full font-medium transition-colors shadow-sm">
+                        + 貼照片
+                    </button>
+                </div>
+            </div>
+            <div id="records-container" class="masonry"></div>
+        </section>
+
+        <!-- 區塊 3: 日常動態分享區 -->
+        <section id="sec-updates" class="hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-ink"></i> 日常小碎片
+                </h2>
+                <button onclick="openModal('update-modal')" class="bg-ink hover:bg-gray-800 text-white px-5 py-2 rounded-full font-medium transition-colors shadow-sm">
+                    發佈動態
+                </button>
+            </div>
+            <div id="updates-container" class="max-w-2xl mx-auto space-y-6"></div>
+        </section>
+    </main>
+
+    <!-- 1. 新增提案 Modal -->
+    <div id="proposal-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-1"></div>
+            <h3 class="text-lg font-bold mb-4 mt-2 text-ink">提出新點子 💡</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">標題</label>
+                    <input type="text" id="prop-title" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent" placeholder="例如：秋季野餐大會">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">內容說明</label>
+                    <textarea id="prop-desc" rows="3" class="w-full border-2 border-gray-200 rounded-lg focus:border-morandi outline-none p-3 resize-none" placeholder="想去哪裡？做什麼？"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">提案人</label>
+                    <input type="text" id="prop-author" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent" placeholder="你的名字">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('proposal-modal')" class="px-4 py-2 text-gray-500 hover:text-ink">取消</button>
+                <button onclick="submitProposal()" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors">送出貼上</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 設定最終方案 Modal -->
+    <div id="finalize-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow relative border-4 border-yellow-100">
+            <div class="washi-tape tape-3"></div>
+            <h3 class="text-lg font-bold mb-2 mt-2 text-ink">🎉 決定是這個了！</h3>
+            <p class="text-sm text-gray-500 mb-4">請指定一位負責人來主導這次活動吧。</p>
+            <input type="hidden" id="final-prop-id">
+            <div>
+                <label class="block text-sm font-medium mb-1">負責人姓名</label>
+                <input type="text" id="final-owner" class="w-full border-b-2 border-gray-200 focus:border-milktea outline-none py-2 bg-transparent" placeholder="例如：小智">
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('finalize-modal')" class="px-4 py-2 text-gray-500 hover:text-ink">取消</button>
+                <button onclick="confirmFinalize()" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-xl transition-colors">確認決定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 新增相片 Modal -->
+    <div id="photo-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-1"></div>
+            <h3 class="text-lg font-bold mb-4 mt-2 text-ink">貼上活動相片 📸</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">相片網址 (URL)</label>
+                    <input type="text" id="photo-url" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent" placeholder="https://...">
+                    <p class="text-xs text-gray-400 mt-1">請貼上圖片的公開連結 (例如 Imgur 網址結尾為 .jpg)</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">相片說明 (寫在拍立得底下)</label>
+                    <input type="text" id="photo-text" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent" placeholder="好開心的野餐！">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">上傳者</label>
+                    <input type="text" id="photo-author" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent" placeholder="你的名字">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('photo-modal')" class="px-4 py-2 text-gray-500 hover:text-ink">取消</button>
+                <button onclick="submitRecord('photo')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors">貼上牆壁</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 新增素材/連結 Modal -->
+    <div id="material-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-[#fbf9f4] rounded-2xl p-6 w-full max-w-md card-shadow border-2 border-dashed border-milktea relative">
+            <h3 class="text-lg font-bold mb-4 text-ink">新增共用素材 / 簡報 📎</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">標題</label>
+                    <input type="text" id="mat-title" class="w-full border-b-2 border-milktea focus:border-ink outline-none py-2 bg-transparent" placeholder="例如：十一月聚會企劃書">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">連結網址</label>
+                    <input type="text" id="mat-url" class="w-full border-b-2 border-milktea focus:border-ink outline-none py-2 bg-transparent" placeholder="https://...">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('material-modal')" class="px-4 py-2 text-gray-500 hover:text-ink">取消</button>
+                <button onclick="submitRecord('material')" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-xl transition-colors">新增素材</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 發佈動態 Modal -->
+    <div id="update-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <h3 class="text-lg font-bold mb-4 text-ink">今天有什麼新鮮事？ 📝</h3>
+            <div class="space-y-4">
+                <div>
+                    <textarea id="upd-text" rows="4" class="w-full border-2 border-gray-200 rounded-lg focus:border-ink outline-none p-3 resize-none" placeholder="跟大家分享一下吧..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">附圖網址 (選填)</label>
+                    <input type="text" id="upd-img" class="w-full border-b-2 border-gray-200 focus:border-ink outline-none py-2 bg-transparent" placeholder="https://... (留空則純文字)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">發文者</label>
+                    <input type="text" id="upd-author" class="w-full border-b-2 border-gray-200 focus:border-ink outline-none py-2 bg-transparent" placeholder="你的名字">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('update-modal')" class="px-4 py-2 text-gray-500 hover:text-ink">取消</button>
+                <button onclick="submitUpdate()" class="bg-ink hover:bg-gray-800 text-white px-5 py-2 rounded-xl transition-colors">發佈</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- 1. 預設範例資料 --- */
+        const defaultData = {
+            proposals: [
+                { id: 1, title: '8月：期初聚會', desc: '日期：2025.08.09', author: '小蓁', votes: 0, comments: [], isFinal: true, owner: '小蓁', date: '2025-08-09' },
+                { id: 2, title: '9月：人生百味桌遊', desc: '', author: '意新', votes: 0, comments: [], isFinal: true, owner: '意新', date: '2025-08-09' },
+                { id: 3, title: '10月：分享追劇', desc: '', author: '小蓁', votes: 0, comments: [], isFinal: true, owner: '小蓁', date: '2025-08-09' },
+                { id: 4, title: '11月：短短的讀經', desc: '', author: '李其', votes: 0, comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+                { id: 5, title: '12月：抱怨職場鳥事 / 火鍋+聖誕餅乾', desc: '', author: '牧凡', votes: 0, comments: [], isFinal: true, owner: '牧凡', date: '2025-08-09' },
+                { id: 6, title: '1月：新年目標', desc: '', author: '涵晴', votes: 0, comments: [], isFinal: true, owner: '涵晴', date: '2025-08-09' },
+                { id: 7, title: '3月：AI輔助查經', desc: '@意新姿聿家', author: '李其', votes: 0, comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+                { id: 8, title: '4月：分享理財', desc: '@牧凡涵晴家', author: '姿聿', votes: 0, comments: [], isFinal: true, owner: '姿聿', date: '2025-08-09' },
+                { id: 9, title: '5月：烘焙坊', desc: '@意新姿聿家', author: '意新', votes: 0, comments: [], isFinal: true, owner: '意新', date: '2025-08-09' },
+                { id: 10, title: '6月：閱讀分享', desc: '@牧凡涵晴家', author: '小蓁、牧凡', votes: 0, comments: [], isFinal: true, owner: '小蓁、牧凡', date: '2025-08-09' },
+                { id: 11, title: '7月：讀書分享', desc: '', author: '姿聿涵晴', votes: 0, comments: [], isFinal: true, owner: '姿聿、涵晴', date: '2025-08-09' },
+                { id: 12, title: '8月：AI在生活中的應用', desc: '', author: '小蓁宇浩', votes: 0, comments: [], isFinal: true, owner: '小蓁、宇浩', date: '2025-08-09' },
+                { id: 13, title: '9月：個人雲修生活分享', desc: '', author: '牧凡', votes: 0, comments: [], isFinal: true, owner: '牧凡', date: '2025-08-09' },
+                { id: 14, title: '10月：野餐&一人一菜', desc: '', author: '李其', votes: 0, comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+                { id: 15, title: '11月：爬山or運動會', desc: '', author: '傑昕', votes: 0, comments: [], isFinal: true, owner: '傑昕', date: '2025-08-09' },
+                { id: 16, title: '12月：年度回顧+新年新希望', desc: '', author: '涵晴', votes: 0, comments: [], isFinal: true, owner: '涵晴', date: '2025-08-09' }
+            ],
+            records: [
+                {
+                    id: 1,
+                    type: 'material',
+                    url: '#',
+                    text: '成青小組.pdf',
+                    author: '管理員',
+                    date: '2025-08-09'
+                }
+            ],
+            updates: [
+                {
+                    id: 1,
+                    text: '右手手腕恢復\n把握小假期做平常上班沒辦法做的事\n婚禮籌備',
+                    imgUrl: '',
+                    author: '意新',
+                    date: '2025-08-09'
+                },
+                {
+                    id: 2,
+                    text: '工作調適(現在班表滿)\n媽媽手恢復\n婚禮籌備',
+                    imgUrl: '',
+                    author: '姿聿',
+                    date: '2025-08-09'
+                },
+                {
+                    id: 3,
+                    text: '愛壓榨人的主管要走了!!!\n明年要接堂長,要管理140+個住民\n論文沒什麼進度,目前覺得很難在生活中塞進這件事',
+                    imgUrl: '',
+                    author: '牧凡',
+                    date: '2025-10-01'
+                },
+                {
+                    id: 4,
+                    text: '忙碌但逐漸上軌道\n令人生氣的同事',
+                    imgUrl: '',
+                    author: '涵晴',
+                    date: '2025-10-01'
+                },
+                {
+                    id: 5,
+                    text: '業務好多,但有在找方法提升做事效率,近期想徵新同事\n跟實驗室的同事同學相處變多,覺得可能需要立個界線?\n還是在猶豫要不要念博士班的路上',
+                    imgUrl: '',
+                    author: '小蓁',
+                    date: '2025-10-01'
+                },
+                {
+                    id: 6,
+                    text: '一篇 paper被接受了,還有另一篇在飛。育妙要開始申請研究所了,希望過程不要壓力太大。',
+                    imgUrl: '',
+                    author: '李其',
+                    date: '2025-10-01'
+                },
+                {
+                    id: 7,
+                    text: '婚禮準備(影片做完了)、十二指腸潰瘍治療(回家丟鍋子)、租屋(跟房東談漆油漆)',
+                    imgUrl: '',
+                    author: '姿聿',
+                    date: '2025-10-01'
+                },
+                {
+                    id: 8,
+                    text: '婚禮準備、又腸胃拉肚子、手好一點偶爾還是會痛,其他部位也會酸痛(職災鳴鳴)',
+                    imgUrl: '',
+                    author: '意新',
+                    date: '2025-10-01'
+                }
+            ]
+        };
+
+        /* --- 2. 狀態管理 --- */
+        let appData = { proposals: [], records: [], updates: [] };
+
+        function loadData() {
+            const stored = localStorage.getItem('chengQingData_v1');
+            if (stored) {
+                appData = JSON.parse(stored);
+            } else {
+                appData = JSON.parse(JSON.stringify(defaultData));
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('chengQingData_v1', JSON.stringify(appData));
+        }
+
+        function generateId() {
+            return Date.now() + Math.floor(Math.random() * 1000);
+        }
+
+        function getTodayDate() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        /* --- 3. 頁面切換 --- */
+        function switchTab(tabId) {
+            ['proposals', 'records', 'updates'].forEach(id => {
+                document.getElementById(`nav-${id}`).classList.remove('active', 'text-ink');
+                document.getElementById(`nav-${id}`).classList.add('text-gray-500');
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            activeNav.classList.add('active', 'text-ink');
+            activeNav.classList.remove('text-gray-500');
+
+            ['proposals', 'records', 'updates'].forEach(id => {
+                document.getElementById(`sec-${id}`).style.display = (id === tabId) ? 'block' : 'none';
+            });
+        }
+
+        /* --- 4. 彈窗管理 --- */
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            const inputs = document.getElementById(id).querySelectorAll('input, textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        /* --- 5. 區塊 1: 提案渲染與互動 --- */
+        function renderProposals() {
+            const container = document.getElementById('proposals-container');
+            container.innerHTML = '';
+            
+            const sortedProposals = [...appData.proposals].sort((a, b) => (b.isFinal === a.isFinal) ? 0 : b.isFinal ? 1 : -1);
+
+            sortedProposals.forEach(prop => {
+                const isFinalBadge = prop.isFinal 
+                    ? `<div class="absolute -top-3 -right-3 bg-red-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow transform rotate-12 z-20"><i class="fa-solid fa-crown"></i> 本月決定</div>`
+                    : '';
+                const ownerInfo = prop.isFinal
+                    ? `<div class="mt-3 bg-yellow-50 p-2 rounded text-sm text-yellow-800 flex items-center gap-2"><i class="fa-solid fa-user-check"></i> 負責人：<b>${prop.owner}</b></div>`
+                    : `<button onclick="openFinalizeModal(${prop.id})" class="mt-3 text-sm text-morandi hover:text-morandi-dark underline flex items-center gap-1"><i class="fa-solid fa-check"></i> 設為最終決定</button>`;
+                
+                let commentsHtml = (prop.comments || []).map(c => `
+                    <div class="bg-gray-50 p-2 rounded mb-1 text-sm">
+                        <span class="font-bold text-ink">${c.author}:</span> ${c.text}
+                    </div>
+                `).join('');
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-5 card-shadow relative ${prop.isFinal ? 'border-4 border-yellow-200' : 'border border-gray-100'}">
+                        ${prop.isFinal ? '<div class="washi-tape tape-2"></div>' : '<div class="washi-tape tape-1"></div>'}
+                        ${isFinalBadge}
+                        <div class="flex justify-between items-start mt-2">
+                            <h3 class="text-xl font-bold text-ink mb-2">${prop.title}</h3>
+                            <button onclick="voteProposal(${prop.id})" class="flex flex-col items-center bg-gray-50 hover:bg-red-50 p-2 rounded-lg transition-colors border border-gray-100 min-w-[60px]">
+                                <i class="fa-solid fa-heart ${prop.votes > 0 ? 'text-red-400' : 'text-gray-300'} mb-1 text-lg"></i>
+                                <span class="font-bold text-ink">${prop.votes} 票</span>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-2">提案人：${prop.author} · ${prop.date}</p>
+                        <p class="text-gray-700 mb-3 whitespace-pre-wrap">${prop.desc}</p>
+                        ${ownerInfo}
+                        
+                        <hr class="my-4 border-dashed border-gray-200">
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold text-gray-500"><i class="fa-regular fa-comments"></i> 討論區</h4>
+                            <div class="max-h-32 overflow-y-auto pr-1">
+                                ${commentsHtml || '<p class="text-xs text-gray-400 italic">還沒有人留言喔～</p>'}
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <input type="text" id="comment-input-${prop.id}" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1 text-sm outline-none focus:border-morandi" placeholder="寫點什麼...">
+                                <button onclick="addComment(${prop.id})" class="bg-gray-200 hover:bg-morandi hover:text-white px-3 py-1 rounded-lg text-sm transition-colors">送出</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function submitProposal() {
+            const title = document.getElementById('prop-title').value.trim();
+            const desc = document.getElementById('prop-desc').value.trim();
+            const author = document.getElementById('prop-author').value.trim() || '匿名';
+            
+            if (!title || !desc) return;
+
+            appData.proposals.push({
+                id: generateId(),
+                title, desc, author, votes: 0, comments: [], isFinal: false, owner: '', date: getTodayDate()
+            });
+            saveData();
+            renderProposals();
+            closeModal('proposal-modal');
+        }
+
+        function voteProposal(id) {
+            const prop = appData.proposals.find(p => p.id === id);
+            if (prop) {
+                prop.votes += 1;
+                saveData();
+                renderProposals();
+            }
+        }
+
+        function addComment(id) {
+            const input = document.getElementById(`comment-input-${id}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const prop = appData.proposals.find(p => p.id === id);
+            if (prop) {
+                if (!prop.comments) prop.comments = [];
+                prop.comments.push({ text, author: '我' }); 
+                saveData();
+                renderProposals();
+            }
+        }
+
+        function openFinalizeModal(id) {
+            document.getElementById('final-prop-id').value = id;
+            openModal('finalize-modal');
+        }
+
+        function confirmFinalize() {
+            const id = parseInt(document.getElementById('final-prop-id').value);
+            const owner = document.getElementById('final-owner').value.trim() || '未定';
+            
+            appData.proposals.forEach(p => p.isFinal = false);
+            
+            const prop = appData.proposals.find(p => p.id === id);
+            if (prop) {
+                prop.isFinal = true;
+                prop.owner = owner;
+                saveData();
+                renderProposals();
+                closeModal('finalize-modal');
+            }
+        }
+
+        /* --- 6. 區塊 2: 相片與素材牆 --- */
+        function renderRecords() {
+            const container = document.getElementById('records-container');
+            container.innerHTML = '';
+
+            const sortedRecords = [...appData.records].reverse();
+
+            sortedRecords.forEach((rec, index) => {
+                const rotation = (index % 2 === 0) ? (Math.random() * 4 - 2) : (Math.random() * -4 + 2);
+                
+                if (rec.type === 'photo') {
+                    const cardHtml = `
+                        <div class="masonry-item">
+                            <div class="polaroid" style="transform: rotate(${rotation}deg);">
+                                <div class="washi-tape tape-1"></div>
+                                <img src="${rec.url}" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Image+Broken'" class="w-full aspect-[4/3] object-cover bg-gray-100" alt="photo">
+                                <div class="mt-4 text-center">
+                                    <p class="font-handwriting text-xl text-ink">${rec.text}</p>
+                                    <p class="text-xs text-gray-400 mt-2">${rec.date} · 來自 ${rec.author}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                } else if (rec.type === 'material') {
+                    const cardHtml = `
+                        <div class="masonry-item">
+                            <a href="${rec.url}" target="_blank" class="block bg-milktea text-white p-5 rounded-xl card-shadow border-2 border-dashed border-white transform transition hover:scale-105" style="transform: rotate(${rotation/2}deg);">
+                                <div class="flex items-center gap-3">
+                                    <i class="fa-solid fa-paperclip text-2xl"></i>
+                                    <div>
+                                        <h4 class="font-bold text-lg">${rec.text}</h4>
+                                        <p class="text-xs opacity-80 mt-1">點擊開啟連結 · ${rec.author}</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                }
+            });
+        }
+
+        function submitRecord(type) {
+            let record = { id: generateId(), type, date: getTodayDate() };
+            
+            if (type === 'photo') {
+                const url = document.getElementById('photo-url').value.trim();
+                const text = document.getElementById('photo-text').value.trim();
+                const author = document.getElementById('photo-author').value.trim() || '匿名';
+                if(!url) return;
+                record = { ...record, url, text, author };
+                closeModal('photo-modal');
+            } else if (type === 'material') {
+                const text = document.getElementById('mat-title').value.trim();
+                const url = document.getElementById('mat-url').value.trim();
+                if(!text) return;
+                record = { ...record, url, text, author: '管理員' };
+                closeModal('material-modal');
+            }
+
+            appData.records.push(record);
+            saveData();
+            renderRecords();
+        }
+
+        /* --- 7. 區塊 3: 日常動態 --- */
+        function renderUpdates() {
+            const container = document.getElementById('updates-container');
+            container.innerHTML = '';
+
+            const sortedUpdates = [...appData.updates].reverse();
+
+            sortedUpdates.forEach(upd => {
+                const imgHtml = upd.imgUrl 
+                    ? `<img src="${upd.imgUrl}" onerror="this.style.display='none'" class="mt-3 rounded-lg w-full max-h-80 object-cover border border-gray-100">`
+                    : '';
+                
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-6 card-shadow border-l-4 border-ink relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">
+                                    ${upd.author.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-ink">${upd.author}</h4>
+                                    <p class="text-xs text-gray-400">${upd.date}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 whitespace-pre-wrap">${upd.text}</p>
+                        ${imgHtml}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function submitUpdate() {
+            const text = document.getElementById('upd-text').value.trim();
+            const imgUrl = document.getElementById('upd-img').value.trim();
+            const author = document.getElementById('upd-author').value.trim() || '匿名';
+            
+            if (!text) return;
+
+            appData.updates.push({
+                id: generateId(), text, imgUrl, author, date: getTodayDate()
+            });
+            saveData();
+            renderUpdates();
+            closeModal('update-modal');
+        }
+
+        /* --- 8. 初始化執行 --- */
+        window.onload = function() {
+            loadData();
+            renderProposals();
+            renderRecords();
+            renderUpdates();
+            document.getElementById('sec-proposals').style.display = 'block';
+        };
+    </script>
+</body>
+</html>
