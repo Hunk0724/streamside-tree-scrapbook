@@ -1,12 +1,13 @@
 {
   "name": "streamside-tree-scrapbook",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check-wishes": "node scripts/check-wishes.mjs"
   },
   "dependencies": {
     "firebase": "^11.4.0",

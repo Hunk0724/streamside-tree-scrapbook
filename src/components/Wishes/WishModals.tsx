@@ -132,12 +132,16 @@ export const AdminWishModal: React.FC<AdminWishModalProps> = ({ wish, isOpen, on
   const { showToast } = useAuth();
   const [status, setStatus] = useState<WishStatus>('pending');
   const [adminNote, setAdminNote] = useState('');
+  const [changeSummary, setChangeSummary] = useState('');
+  const [versionTag, setVersionTag] = useState('v1.1.0');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (wish) {
       setStatus(wish.status || 'pending');
       setAdminNote(wish.adminNote || '');
+      setChangeSummary(wish.changeSummary || '');
+      setVersionTag(wish.versionTag || 'v1.1.0');
     }
   }, [wish]);
 
@@ -150,6 +154,8 @@ export const AdminWishModal: React.FC<AdminWishModalProps> = ({ wish, isOpen, on
       await updateDoc(doc(db, 'wishes', wish.id), {
         status,
         adminNote: adminNote.trim(),
+        changeSummary: changeSummary.trim(),
+        versionTag: versionTag.trim(),
         updatedAt: serverTimestamp()
       });
       showToast('✨ 願望進度已成功更新！', 3000);
@@ -164,11 +170,11 @@ export const AdminWishModal: React.FC<AdminWishModalProps> = ({ wish, isOpen, on
 
   return (
     <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow relative animate-scale-up">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative animate-scale-up max-h-[90vh] overflow-y-auto">
         <div className="washi-tape tape-2"></div>
         <div className="flex justify-between items-center mb-3 mt-1">
           <h3 className="text-base font-bold text-ink flex items-center gap-1.5">
-            <i className="fa-solid fa-gear text-morandi"></i> 更新願望進度
+            <i className="fa-solid fa-gear text-morandi"></i> 更新願望進度與上線日誌
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-ink p-1">
             <i className="fa-solid fa-xmark text-lg"></i>
@@ -188,15 +194,44 @@ export const AdminWishModal: React.FC<AdminWishModalProps> = ({ wish, isOpen, on
               <option value="completed">🎉 已實現 (功能已上線)</option>
             </select>
           </div>
+
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">管理員開發者備註 (選填)</label>
             <textarea
-              rows={3}
+              rows={2}
               value={adminNote}
               onChange={(e) => setAdminNote(e.target.value)}
               className="w-full border-2 border-gray-200 rounded-xl p-2.5 resize-none text-xs text-ink outline-none focus:border-morandi placeholder-gray-400"
               placeholder="例如：預計下週上線！或：已部署於手帳～"
             ></textarea>
+          </div>
+
+          <div className="bg-green-50/70 border border-green-200 p-3 rounded-xl space-y-3">
+            <h4 className="text-xs font-bold text-green-800 flex items-center gap-1.5">
+              <i className="fa-solid fa-code-branch"></i> 上線發布資訊 (實現時填寫)
+            </h4>
+            <div>
+              <label className="block text-[11px] font-medium text-green-900 mb-1">對應發布版本號</label>
+              <input
+                type="text"
+                value={versionTag}
+                onChange={(e) => setVersionTag(e.target.value)}
+                className="w-full border border-green-300 rounded-lg p-1.5 text-xs text-ink bg-white outline-none focus:border-green-600"
+                placeholder="例如：v1.1.0"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-green-900 mb-1">
+                此願望改動與擴充功能重點摘要 (Release Notes)
+              </label>
+              <textarea
+                rows={3}
+                value={changeSummary}
+                onChange={(e) => setChangeSummary(e.target.value)}
+                className="w-full border border-green-300 rounded-lg p-2 resize-none text-xs text-ink bg-white outline-none focus:border-green-600 placeholder-gray-400"
+                placeholder="例如：開放全組成員協同編輯提案（標題、想法說明、負責人），並在卡片保留最後編輯者足跡。"
+              ></textarea>
+            </div>
           </div>
           <div className="mt-5 flex justify-end gap-2 pt-2">
             <button

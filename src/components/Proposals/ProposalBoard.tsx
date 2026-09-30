@@ -133,13 +133,20 @@ export const ProposalBoard: React.FC = () => {
     }
   };
 
-  // 編輯儲存提案
+  // 編輯儲存提案（記錄最後編輯者足跡）
   const handleSaveEdit = async (
     id: string,
     updates: { title: string; desc: string; owner: string; isFinal: boolean }
   ) => {
     try {
-      await updateDoc(doc(db, 'proposals', id), updates);
+      const now = new Date();
+      const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      await updateDoc(doc(db, 'proposals', id), {
+        ...updates,
+        lastEditedBy: currentUser?.displayName || '小組成員',
+        lastEditedAt: dateStr,
+        updatedAt: serverTimestamp()
+      });
       showToast('✅ 提案修改已成功儲存！');
     } catch (err: any) {
       console.error('修改提案失敗:', err);

@@ -107,11 +107,17 @@ export const EditProposalModal: React.FC<EditProposalModalProps> = ({
   onSave,
   onDelete
 }) => {
+  const { currentUser, isUserAdmin } = useAuth();
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [owner, setOwner] = useState('');
   const [isFinal, setIsFinal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const canDelete = isUserAdmin || (currentUser && proposal && (
+    proposal.authorUid === currentUser.uid ||
+    (!proposal.authorUid && proposal.author === currentUser.displayName)
+  ));
 
   useEffect(() => {
     if (proposal) {
@@ -212,14 +218,18 @@ export const EditProposalModal: React.FC<EditProposalModalProps> = ({
           </div>
 
           <div className="mt-6 pt-3 border-t border-gray-100 flex justify-between items-center">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
-            >
-              <i className="fa-regular fa-trash-can"></i> 刪除此提案
-            </button>
+            {canDelete ? (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isSaving}
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <i className="fa-regular fa-trash-can"></i> 刪除此提案
+              </button>
+            ) : (
+              <div></div>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"

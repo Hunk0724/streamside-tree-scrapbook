@@ -78,6 +78,31 @@ export const WishBoard: React.FC = () => {
     }
   };
 
+  const handleAddWishComment = async (id: string, text: string) => {
+    if (!currentUser) return;
+    const wish = wishes.find((w) => w.id === id);
+    if (!wish) return;
+
+    const comments = Array.isArray(wish.comments) ? [...wish.comments] : [];
+    const now = new Date();
+    const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    comments.push({
+      author: currentUser.displayName || '小組成員',
+      authorPhoto: currentUser.photoURL || '',
+      authorUid: currentUser.uid,
+      text,
+      date: dateStr
+    });
+
+    try {
+      await updateDoc(doc(db, 'wishes', id), { comments });
+    } catch (err: any) {
+      console.error('留言反饋失敗:', err);
+      showToast('⚠️ 留言反饋失敗：' + (err.message || '權限不足'));
+    }
+  };
+
   const filteredWishes = filterStatus === 'all'
     ? wishes
     : wishes.filter((w) => w.status === filterStatus);
@@ -149,6 +174,7 @@ export const WishBoard: React.FC = () => {
               onLike={handleLike}
               onOpenAdminModal={(w) => setSelectedWishForAdmin(w)}
               onDelete={handleDeleteWish}
+              onAddComment={handleAddWishComment}
             />
           ))}
         </div>

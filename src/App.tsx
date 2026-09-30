@@ -45,6 +45,12 @@ const MainLayout: React.FC = () => {
         {currentTab === 'wishes' && <WishBoard />}
       </main>
 
+      {/* 頁尾版本標籤與溫馨註腳 */}
+      <footer className="mt-8 text-center text-xs text-gray-400 py-6 border-t border-gray-100 flex flex-col items-center gap-1">
+        <p>🌿 成青小組的小手帳 · Cozy Scrapbook <span className="font-mono font-semibold text-morandi">v1.1.0</span></p>
+        <p className="text-[11px] text-gray-400">持續傾聽組員許願 · 讓小組每一天都更美好 ✨</p>
+      </footer>
+
       {/* 手機版固定底欄導覽列 */}
       <MobileBottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
 

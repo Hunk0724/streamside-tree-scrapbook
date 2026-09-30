@@ -19,7 +19,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   onDelete,
   onFinalize
 }) => {
-  const { currentUser, isUserAdmin } = useAuth();
+  const { currentUser, isUserAdmin, isUserApproved } = useAuth();
   const [commentText, setCommentText] = useState('');
   const [isSendingComment, setIsSendingComment] = useState(false);
 
@@ -27,7 +27,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   const hasVoted = !!(currentUser && voters.includes(currentUser.uid));
   const voteCount = typeof proposal.votes === 'number' ? proposal.votes : voters.length;
 
-  const canManage = isUserAdmin || (currentUser && (
+  // 全體核可成員皆可協同編輯提案；刪除與定案仍維持原作者與管理員專屬
+  const canEdit = isUserApproved;
+  const canDelete = isUserAdmin || (currentUser && (
     proposal.authorUid === currentUser.uid ||
     (!proposal.authorUid && proposal.author === currentUser.displayName)
   ));
@@ -66,8 +68,15 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
         <div className="flex justify-between items-start mt-2">
           <div className="flex-1 pr-2">
             <h3 className="text-xl font-bold text-ink mb-1.5 leading-snug">{proposal.title}</h3>
-            <p className="text-xs text-gray-400 mb-2 flex items-center gap-1.5">
-              <i className="fa-regular fa-user"></i> {proposal.author || '匿名'} · {proposal.date || ''}
+            <p className="text-xs text-gray-400 mb-2 flex flex-wrap items-center gap-1.5">
+              <span>
+                <i className="fa-regular fa-user"></i> {proposal.author || '匿名'} · {proposal.date || ''}
+              </span>
+              {proposal.lastEditedBy && (
+                <span className="text-morandi-dark font-medium bg-morandi/10 px-2 py-0.5 rounded-md text-[11px]">
+                  (由 {proposal.lastEditedBy} 於 {proposal.lastEditedAt || ''} 補充編輯)
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -108,26 +117,30 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           </button>
         )}
 
-        {canManage && (
+        {(canEdit || canDelete) && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
-            <button
-              onClick={() => onEdit(proposal)}
-              className="text-xs text-gray-600 hover:text-morandi-dark hover:bg-morandi/15 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-medium border border-gray-200 bg-white"
-              title="編輯此提案內容"
-            >
-              <i className="fa-regular fa-pen-to-square"></i> 編輯
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm(`確定要刪除提案「${proposal.title}」嗎？`)) {
-                  onDelete(proposal.id);
-                }
-              }}
-              className="text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
-              title="刪除此提案"
-            >
-              <i className="fa-regular fa-trash-can"></i> 刪除
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => onEdit(proposal)}
+                className="text-xs text-gray-600 hover:text-morandi-dark hover:bg-morandi/15 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-medium border border-gray-200 bg-white"
+                title="編輯或補充此提案內容"
+              >
+                <i className="fa-regular fa-pen-to-square"></i> 編輯/補充
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`確定要刪除提案「${proposal.title}」嗎？`)) {
+                    onDelete(proposal.id);
+                  }
+                }}
+                className="text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                title="刪除此提案"
+              >
+                <i className="fa-regular fa-trash-can"></i> 刪除
+              </button>
+            )}
           </div>
         )}
       </div>
