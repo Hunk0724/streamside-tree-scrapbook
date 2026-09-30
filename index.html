@@ -1146,6 +1146,7 @@
             if (mobileContainer) mobileContainer.innerHTML = `${adminBadgeHtml} ${userPillHtml}`;
 
             // 更新 Modal 發佈人欄位
+            const displayName = currentUser ? (currentUser.displayName || '已登入小組成員') : '已登入小組成員';
             if (document.getElementById('prop-author-display')) document.getElementById('prop-author-display').innerText = displayName;
             if (document.getElementById('photo-author-display')) document.getElementById('photo-author-display').innerText = displayName;
             if (document.getElementById('upd-author-display')) document.getElementById('upd-author-display').innerText = displayName;
