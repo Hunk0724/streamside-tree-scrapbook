@@ -815,6 +815,20 @@
                     status: 'pending',
                     appliedAt: serverTimestamp()
                 });
+
+                // 發送 Email 即時通知管理員 (非同步背景執行，不阻塞畫面)
+                const NOTIFICATION_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCSo7sMGuQimiRs4UN72A1l8KzeAKI2JxRprxV_93LZRxm2hxwc-SBfCxcol_nUTQ/exec";
+                fetch(NOTIFICATION_WEBHOOK_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        applicantName: currentUser.displayName || '小組訪客',
+                        applicantEmail: currentUser.email || '未提供信箱',
+                        applyTime: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
+                    })
+                }).catch(err => console.warn("管理員信件通知發送失敗:", err));
+
                 renderGatekeeper('pending');
                 showStatus('🎉 申請已送出！請等待管理員審核', 4000);
             } catch (err) {
