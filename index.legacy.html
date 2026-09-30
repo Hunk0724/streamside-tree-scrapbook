@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Scrapbook - 我們的小組手帳</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 圖示 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper': '#fbf9f4',      /* 米白底色 */
+                        'milktea': '#d4b59e',    /* 奶茶色 */
+                        'milktea-dark': '#b9957a',
+                        'morandi': '#a3b19b',    /* 莫蘭迪綠 */
+                        'morandi-dark': '#88997e',
+                        'ink': '#4a433d'         /* 墨水深灰棕 */
+                    },
+                    fontFamily: {
+                        'sans': ['"Noto Sans TC"', 'sans-serif'],
+                        'handwriting': ['"Caveat"', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #fbf9f4;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h18v2H22v18h-2V22H0v-2h20.5z' fill='%23e5e0d8' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: #4a433d;
+        }
+
+        /* 隱藏捲軸但保持可捲動 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #d4b59e;
+            border-radius: 20px;
+        }
+
+        /* 拍立得與卡片陰影 */
+        .card-shadow {
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-shadow:hover {
+            transform: translateY(-2px);
+            box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .polaroid {
+            background: white;
+            padding: 12px 12px 36px 12px;
+            box-shadow: 3px 4px 12px rgba(0,0,0,0.12);
+            position: relative;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .polaroid:hover {
+            transform: rotate(0deg) scale(1.02) !important;
+            box-shadow: 5px 8px 20px rgba(0,0,0,0.18);
+            z-index: 20;
+        }
+
+        /* 紙膠帶裝飾 */
+        .washi-tape {
+            position: absolute;
+            width: 90px;
+            height: 24px;
+            background-color: rgba(163, 177, 155, 0.7);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .tape-1 { top: -10px; left: 50%; transform: translateX(-50%) rotate(-2deg); }
+        .tape-2 { top: -12px; left: -10px; transform: rotate(-35deg); width: 80px; background-color: rgba(212, 181, 158, 0.7); }
+        .tape-3 { top: -10px; right: -10px; transform: rotate(25deg); width: 80px; background-color: rgba(245, 230, 204, 0.8); }
+
+        /* 瀑布流版面 */
+        .masonry {
+            column-count: 1;
+            column-gap: 1.5rem;
+        }
+        @media (min-width: 640px) { .masonry { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry { column-count: 3; } }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 彈窗遮罩 */
+        .modal-overlay {
+            background-color: rgba(74, 67, 61, 0.55);
+            backdrop-filter: blur(3px);
+        }
+        
+        .tab-btn {
+            border: none;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        .tab-btn:focus, .tab-btn:focus-visible, .tab-btn:active {
+            border: none;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        .tab-btn.active {
+            border-bottom: 4px solid #a3b19b !important;
+            color: #4a433d;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-28 md:pb-20">
+
+    <!-- 全域連線與訊息提示條 -->
+    <div id="status-bar" class="hidden fixed top-3 left-1/2 transform -translate-x-1/2 z-[200] max-w-lg w-[90%] transition-all">
+        <div class="bg-white/95 backdrop-blur border border-milktea text-ink text-sm px-4 py-2.5 rounded-2xl shadow-lg flex items-center justify-between">
+            <span id="status-message" class="flex items-center gap-2">
+                <i class="fa-solid fa-spinner fa-spin text-milktea-dark"></i> 連線中...
+            </span>
+            <button onclick="document.getElementById('status-bar').classList.add('hidden')" class="text-xs text-gray-400 hover:text-ink ml-2">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 1. 門禁鎖定畫面 (未登入 / 待審核 / 未授權) ==================== -->
+    <section id="view-gatekeeper" class="flex min-h-[90vh] items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 sm:p-10 max-w-md w-full card-shadow relative border border-gray-100 text-center">
+            <div class="washi-tape tape-1"></div>
+            
+            <div class="w-16 h-16 rounded-full bg-milktea/20 text-milktea-dark flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                <i id="gate-icon" class="fa-solid fa-lock"></i>
+            </div>
+            
+            <h2 id="gate-title" class="text-2xl font-bold text-ink mb-2">
+                我們的手帳 <span class="text-milktea font-handwriting text-3xl">Scrapbook</span>
+            </h2>
+            <p id="gate-desc" class="text-sm text-gray-500 mb-6 leading-relaxed">
+                這是成青小組的私人互動手帳空間。<br>為了保護成員隱私與防止未授權存取，請先使用 Google 帳號登入。
+            </p>
+
+            <!-- 登入卡片 / 使用者資訊顯示 -->
+            <div id="gate-user-box" class="hidden mb-6 p-4 rounded-2xl bg-gray-50 border border-gray-100 text-left flex items-center gap-3">
+                <img id="gate-user-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-morandi" alt="avatar">
+                <div class="flex-1 min-w-0">
+                    <p id="gate-user-name" class="font-bold text-sm text-ink truncate"></p>
+                    <p id="gate-user-email" class="text-xs text-gray-400 truncate"></p>
+                </div>
+            </div>
+
+            <!-- 動態動作按鈕群 -->
+            <div id="gate-actions" class="space-y-3">
+                <!-- 預設：Google 登入按鈕 -->
+                <button id="btn-gate-login" onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white text-ink border-2 border-gray-200 hover:border-morandi hover:bg-gray-50 py-3 px-5 rounded-2xl font-semibold shadow-sm transition-all text-sm">
+                    <i class="fa-brands fa-google text-red-500 text-lg"></i>
+                    <span>使用 Google 帳號登入</span>
+                </button>
+            </div>
+
+            <!-- 底部註腳 -->
+            <div class="mt-8 pt-4 border-t border-gray-100 text-xs text-gray-400">
+                管理員：<span class="text-ink font-medium">hunk123321123@gmail.com</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 2. 手帳主畫面 (只有核可成員與 Admin 才能看見) ==================== -->
+    <div id="view-app" class="hidden">
+        
+        <!-- 頂部導覽列 -->
+        <header class="bg-white/85 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all border-b border-gray-100">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="flex items-center justify-between w-full md:w-auto">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-book-open text-morandi text-2xl"></i>
+                        <h1 class="text-2xl font-bold text-ink tracking-tight">
+                            我們的手帳 <span class="text-milktea font-handwriting text-3xl">Scrapbook</span>
+                        </h1>
+                    </div>
+                    
+                    <!-- 手機版登入與審核入口 -->
+                    <div class="flex items-center gap-2 md:hidden" id="mobile-auth-container"></div>
+                </div>
+                
+                <!-- 分頁導覽按鈕 (桌面版顯示，手機版收納至底部導覽列) -->
+                <nav class="hidden md:flex space-x-1 w-auto overflow-x-auto justify-start pb-0">
+                    <button onclick="switchTab('proposals')" id="nav-proposals" class="tab-btn active px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-0 select-none">
+                        <i class="fa-regular fa-calendar-check text-morandi"></i> 每月提案
+                    </button>
+                    <button onclick="switchTab('records')" id="nav-records" class="tab-btn px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-0 select-none">
+                        <i class="fa-solid fa-camera-retro text-milktea"></i> 活動紀錄
+                    </button>
+                    <button onclick="switchTab('updates')" id="nav-updates" class="tab-btn px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-0 select-none">
+                        <i class="fa-regular fa-comment-dots text-ink"></i> 日常動態
+                    </button>
+                    <button onclick="switchTab('wishes')" id="nav-wishes" class="tab-btn px-4 py-2 text-gray-500 hover:text-ink whitespace-nowrap transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-0 select-none">
+                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i> 功能許願池
+                    </button>
+                </nav>
+
+                <!-- 桌面版使用者狀態與管理員審核按鈕 -->
+                <div class="hidden md:flex items-center gap-2" id="desktop-auth-container"></div>
+            </div>
+        </header>
+
+        <!-- 主要內容區 -->
+        <main class="max-w-6xl mx-auto px-4 py-6">
+            
+            <!-- 區塊 1: 每月聚會提案區 -->
+            <section id="sec-proposals" class="block">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-2 text-ink">
+                            <i class="fa-solid fa-seedling text-morandi"></i> 聚會提案板
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">點擊愛心進行即時投票，點擊卡片留言交流！</p>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <button id="btn-seed-data" onclick="seedDefaultData()" class="hidden bg-white border border-milktea text-milktea-dark hover:bg-milktea hover:text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors shadow-sm items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> 匯入歷史提案
+                        </button>
+                        <button onclick="openModal('proposal-modal')" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-full font-medium transition-colors shadow-sm flex items-center gap-1.5 text-sm">
+                            <i class="fa-solid fa-plus"></i> 新增提案
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 載入骨架動畫 -->
+                <div id="proposals-loading" class="grid grid-cols-1 md:grid-cols-2 gap-6 py-8">
+                    <div class="bg-white/60 rounded-2xl p-6 h-48 animate-pulse border border-gray-100"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-48 animate-pulse border border-gray-100"></div>
+                </div>
+
+                <div id="proposals-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </section>
+
+            <!-- 區塊 2: 活動素材與紀錄區 -->
+            <section id="sec-records" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-2 text-ink">
+                            <i class="fa-solid fa-images text-milktea"></i> 相片與素材牆
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">上傳小組聚會拍立得或重要簡報共用連結</p>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="openModal('material-modal')" class="bg-white border-2 border-morandi text-morandi hover:bg-morandi hover:text-white px-4 py-2 rounded-full font-medium transition-colors shadow-sm text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-link"></i> + 素材/連結
+                        </button>
+                        <button onclick="openModal('photo-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-4 py-2 rounded-full font-medium transition-colors shadow-sm text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> + 貼照片 (檔案上傳)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 載入中骨架 -->
+                <div id="records-loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
+                    <div class="bg-white/60 rounded-2xl p-6 h-64 animate-pulse"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-64 animate-pulse"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-64 animate-pulse"></div>
+                </div>
+
+                <div id="records-container" class="masonry"></div>
+            </section>
+
+            <!-- 區塊 3: 日常動態分享區 -->
+            <section id="sec-updates" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-2 text-ink">
+                            <i class="fa-solid fa-paper-plane text-ink"></i> 日常小碎片
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">生活點滴、代禱事項與工作近況交流</p>
+                    </div>
+                    <button onclick="openModal('update-modal')" class="bg-ink hover:bg-gray-800 text-white px-5 py-2 rounded-full font-medium transition-colors shadow-sm text-sm flex items-center gap-1.5 w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-pen-nib"></i> 發佈動態
+                    </button>
+                </div>
+
+                <!-- 載入中骨架 -->
+                <div id="updates-loading" class="max-w-2xl mx-auto space-y-4 py-8">
+                    <div class="bg-white/60 rounded-2xl p-6 h-36 animate-pulse"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-36 animate-pulse"></div>
+                </div>
+
+                <div id="updates-container" class="max-w-2xl mx-auto space-y-6"></div>
+            </section>
+
+            <!-- 區塊 4: 功能許願池 -->
+            <section id="sec-wishes" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-2 text-ink">
+                            <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i> 功能許願池
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">有任何改進想法或新功能期望嗎？寫下願望一起集氣實現！</p>
+                    </div>
+                    <button onclick="openModal('wish-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-full font-medium transition-colors shadow-sm text-sm flex items-center gap-1.5 w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> 我要許願
+                    </button>
+                </div>
+
+                <!-- 狀態過濾標籤 -->
+                <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-1 text-xs select-none">
+                    <button onclick="filterWishes('all')" id="wish-filter-all" class="wish-filter-btn px-3.5 py-1.5 rounded-full font-semibold transition-all bg-morandi text-white shadow-sm">
+                        全部願望
+                    </button>
+                    <button onclick="filterWishes('pending')" id="wish-filter-pending" class="wish-filter-btn px-3.5 py-1.5 rounded-full font-medium transition-all bg-white text-gray-600 hover:bg-yellow-50 border border-gray-200">
+                        💡 許願中
+                    </button>
+                    <button onclick="filterWishes('in_progress')" id="wish-filter-in_progress" class="wish-filter-btn px-3.5 py-1.5 rounded-full font-medium transition-all bg-white text-gray-600 hover:bg-blue-50 border border-gray-200">
+                        🛠️ 實現中
+                    </button>
+                    <button onclick="filterWishes('completed')" id="wish-filter-completed" class="wish-filter-btn px-3.5 py-1.5 rounded-full font-medium transition-all bg-white text-gray-600 hover:bg-green-50 border border-gray-200">
+                        🎉 已實現
+                    </button>
+                </div>
+
+                <!-- 載入中骨架 -->
+                <div id="wishes-loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
+                    <div class="bg-white/60 rounded-2xl p-6 h-48 animate-pulse border border-gray-100"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-48 animate-pulse border border-gray-100"></div>
+                    <div class="bg-white/60 rounded-2xl p-6 h-48 animate-pulse border border-gray-100"></div>
+                </div>
+
+                <div id="wishes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+        </main>
+
+        <!-- 手機版 App 底部導覽列 (只在 md 以下螢幕顯示) -->
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200/90 shadow-[0_-4px_15px_rgba(0,0,0,0.06)] px-2 py-1 flex justify-around items-center">
+            <button onclick="switchTab('proposals')" id="m-nav-proposals" class="flex-1 flex flex-col items-center justify-center py-1 text-morandi-dark font-bold text-[11px] transition-colors focus:outline-none">
+                <i class="fa-regular fa-calendar-check text-lg mb-0.5"></i>
+                <span>提案</span>
+            </button>
+            <button onclick="switchTab('records')" id="m-nav-records" class="flex-1 flex flex-col items-center justify-center py-1 text-gray-400 text-[11px] transition-colors focus:outline-none">
+                <i class="fa-solid fa-camera-retro text-lg mb-0.5"></i>
+                <span>紀錄</span>
+            </button>
+            <button onclick="switchTab('updates')" id="m-nav-updates" class="flex-1 flex flex-col items-center justify-center py-1 text-gray-400 text-[11px] transition-colors focus:outline-none">
+                <i class="fa-regular fa-comment-dots text-lg mb-0.5"></i>
+                <span>動態</span>
+            </button>
+            <button onclick="switchTab('wishes')" id="m-nav-wishes" class="flex-1 flex flex-col items-center justify-center py-1 text-gray-400 text-[11px] transition-colors focus:outline-none">
+                <i class="fa-solid fa-wand-magic-sparkles text-lg mb-0.5"></i>
+                <span>許願池</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ==================== 3. 彈窗區 (MODALS) ==================== -->
+
+    <!-- 管理員審核面板 Modal -->
+    <div id="admin-modal" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-xl card-shadow relative max-h-[85vh] flex flex-col">
+            <div class="washi-tape tape-1"></div>
+            <div class="flex justify-between items-center mb-4 mt-2">
+                <h3 class="text-lg font-bold text-ink flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-morandi"></i> 小組成員審核管理
+                </h3>
+                <button onclick="closeModal('admin-modal')" class="text-gray-400 hover:text-ink text-sm">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-gray-500 mb-4">
+                只有您 (<b class="text-ink">hunk123321123@gmail.com</b>) 能看見此審核面板。核可後該成員即可即時瀏覽與協作手帳。
+            </p>
+
+            <!-- 待審核列表容器 -->
+            <div class="flex-1 overflow-y-auto pr-1 space-y-4">
+                <div>
+                    <h4 class="text-xs font-bold text-morandi-dark uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock"></i> 待審核申請 (<span id="pending-count">0</span>)
+                    </h4>
+                    <div id="pending-members-list" class="space-y-2">
+                        <!-- 動態插入待審核項目 -->
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-green-500"></i> 已核可的成員名單 (<span id="approved-count">0</span>)
+                    </h4>
+                    <div id="approved-members-list" class="space-y-2">
+                        <!-- 動態插入已核可項目 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <button onclick="closeModal('admin-modal')" class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-ink rounded-xl text-xs font-medium transition-colors">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 新增提案 Modal -->
+    <div id="proposal-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-1"></div>
+            <h3 class="text-lg font-bold mb-4 mt-2 text-ink flex items-center gap-2">
+                <span>提出新點子</span> 💡
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">聚會標題</label>
+                    <input type="text" id="prop-title" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent text-ink placeholder-gray-400" placeholder="例如：10月：秋季野餐大會">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">活動想法 / 內容說明</label>
+                    <textarea id="prop-desc" rows="3" class="w-full border-2 border-gray-200 rounded-lg focus:border-morandi outline-none p-3 resize-none text-ink placeholder-gray-400" placeholder="想去哪裡？預計做什麼呢？"></textarea>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                    <i class="fa-solid fa-circle-user text-morandi text-base"></i>
+                    <span>提案人：<b id="prop-author-display" class="text-ink">小組成員</b></span>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('proposal-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-submit-proposal" onclick="submitProposal()" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors font-medium text-sm shadow-sm flex items-center gap-2">
+                    <span>送出貼上</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 設定最終方案 Modal -->
+    <div id="finalize-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow relative border-4 border-yellow-100">
+            <div class="washi-tape tape-3"></div>
+            <h3 class="text-lg font-bold mb-2 mt-2 text-ink">🎉 決定是這個了！</h3>
+            <p class="text-sm text-gray-500 mb-4">請指定一位負責人來主導這次活動吧。</p>
+            <input type="hidden" id="final-prop-id">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700">負責人姓名</label>
+                <input type="text" id="final-owner" class="w-full border-b-2 border-gray-200 focus:border-milktea outline-none py-2 bg-transparent text-ink" placeholder="例如：小智">
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('finalize-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-confirm-finalize" onclick="confirmFinalize()" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-xl transition-colors text-sm font-medium shadow-sm">確認決定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2.5 編輯/管理提案 Modal -->
+    <div id="edit-proposal-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-2"></div>
+            <div class="flex justify-between items-center mb-4 mt-2">
+                <h3 class="text-lg font-bold text-ink flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-morandi"></i> 編輯提案內容
+                </h3>
+                <button onclick="closeModal('edit-proposal-modal')" class="text-gray-400 hover:text-ink">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <input type="hidden" id="edit-prop-id">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">聚會標題</label>
+                    <input type="text" id="edit-prop-title" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent text-ink placeholder-gray-400 font-medium" placeholder="例如：10月：秋季野餐大會">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">活動想法 / 內容說明</label>
+                    <textarea id="edit-prop-desc" rows="4" class="w-full border-2 border-gray-200 rounded-lg focus:border-morandi outline-none p-3 resize-none text-ink placeholder-gray-400 text-sm" placeholder="想去哪裡？預計做什麼呢？"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">負責人 / 主責人 (選填)</label>
+                    <input type="text" id="edit-prop-owner" class="w-full border-b-2 border-gray-200 focus:border-milktea outline-none py-2 bg-transparent text-ink placeholder-gray-400" placeholder="例如：未指定 或 小智">
+                </div>
+                <div class="flex items-center gap-2 pt-1 bg-yellow-50/60 p-2.5 rounded-xl border border-yellow-100">
+                    <input type="checkbox" id="edit-prop-isfinal" class="w-4 h-4 text-milktea rounded border-gray-300 focus:ring-milktea cursor-pointer">
+                    <label for="edit-prop-isfinal" class="text-xs text-yellow-900 cursor-pointer font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-crown text-yellow-500"></i> 設為本月最終決定方案
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-3 border-t border-gray-100 flex justify-between items-center">
+                <button type="button" onclick="deleteProposalFromEditModal()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+                    <i class="fa-regular fa-trash-can"></i> 刪除此提案
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeModal('edit-proposal-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                    <button id="btn-save-proposal-edit" onclick="saveProposalEdit()" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors font-medium text-sm shadow-sm flex items-center gap-2">
+                        <span>儲存修改</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 新增相片 Modal (支援實體圖檔上傳) -->
+    <div id="photo-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-1"></div>
+            <h3 class="text-lg font-bold mb-4 mt-2 text-ink flex items-center gap-2">
+                <span>貼上活動相片</span> 📸
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        選取照片圖檔 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="file" id="photo-file" accept="image/*" onchange="handlePhotoSelect(event)" 
+                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-morandi file:text-white hover:file:bg-morandi-dark file:cursor-pointer cursor-pointer border border-gray-200 rounded-xl p-2 bg-gray-50">
+                    <p class="text-xs text-gray-400 mt-1">支援 JPG, PNG, WEBP 等圖檔格式，將自動上傳至 Cloud Storage</p>
+                </div>
+
+                <div id="photo-preview-box" class="hidden">
+                    <p class="text-xs text-gray-500 mb-1">拍立得預覽：</p>
+                    <div class="w-full max-w-[200px] mx-auto bg-white p-2.5 pb-6 border border-gray-200 shadow-md rotate-[-2deg]">
+                        <img id="photo-preview-img" src="" class="w-full aspect-[4/3] object-cover bg-gray-100" alt="預覽">
+                        <p id="photo-preview-caption" class="text-center font-handwriting text-ink text-sm mt-2 truncate"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">相片說明 (寫在拍立得底下)</label>
+                    <input type="text" id="photo-text" oninput="updatePhotoCaptionPreview(this.value)" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent text-ink placeholder-gray-400" placeholder="例如：超開心的烤肉野餐！">
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                    <i class="fa-solid fa-camera text-morandi text-base"></i>
+                    <span>上傳者：<b id="photo-author-display" class="text-ink">小組成員</b></span>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('photo-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-submit-photo" onclick="submitPhoto()" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors font-medium text-sm shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span id="btn-submit-photo-text">上傳並貼上</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 新增素材/連結 Modal -->
+    <div id="material-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-[#fbf9f4] rounded-2xl p-6 w-full max-w-md card-shadow border-2 border-dashed border-milktea relative">
+            <h3 class="text-lg font-bold mb-4 text-ink flex items-center gap-2">
+                <span>新增共用素材 / 簡報</span> 📎
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">素材標題</label>
+                    <input type="text" id="mat-title" class="w-full border-b-2 border-milktea focus:border-ink outline-none py-2 bg-transparent text-ink" placeholder="例如：成青小組十月份投影片.pdf">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">連結網址 (Google Drive / Notion 等)</label>
+                    <input type="url" id="mat-url" class="w-full border-b-2 border-milktea focus:border-ink outline-none py-2 bg-transparent text-ink" placeholder="https://drive.google.com/...">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('material-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-submit-material" onclick="submitMaterial()" class="bg-milktea hover:bg-milktea-dark text-white px-5 py-2 rounded-xl transition-colors text-sm font-medium shadow-sm">新增素材</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 發佈動態 Modal (支援文字 + 可選附圖上傳) -->
+    <div id="update-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <h3 class="text-lg font-bold mb-4 text-ink flex items-center gap-2">
+                <span>今天有什麼新鮮事？</span> 📝
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <textarea id="upd-text" rows="4" class="w-full border-2 border-gray-200 rounded-lg focus:border-ink outline-none p-3 resize-none text-ink placeholder-gray-400" placeholder="跟大家分享近況、工作或是生活小感恩吧..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">附圖圖檔 (選填)</label>
+                    <input type="file" id="upd-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer border border-gray-200 rounded-lg p-2 bg-gray-50">
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                    <i class="fa-solid fa-pen text-ink text-base"></i>
+                    <span>發文者：<b id="upd-author-display" class="text-ink">小組成員</b></span>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('update-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-submit-update" onclick="submitUpdate()" class="bg-ink hover:bg-gray-800 text-white px-5 py-2 rounded-xl transition-colors font-medium text-sm shadow-sm flex items-center gap-2">
+                    <span id="btn-submit-update-text">發佈動態</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 新增許願 Modal -->
+    <div id="wish-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md card-shadow relative">
+            <div class="washi-tape tape-3"></div>
+            <div class="flex justify-between items-center mb-4 mt-2">
+                <h3 class="text-lg font-bold text-ink flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i> 許下新的手帳願望
+                </h3>
+                <button onclick="closeModal('wish-modal')" class="text-gray-400 hover:text-ink">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">願望標題 <span class="text-red-500">*</span></label>
+                    <input type="text" id="wish-title" class="w-full border-b-2 border-gray-200 focus:border-morandi outline-none py-2 bg-transparent text-ink placeholder-gray-400 font-medium" placeholder="例如：希望照片可以點開看全螢幕大圖">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">詳細說明 / 使用情境</label>
+                    <textarea id="wish-desc" rows="4" class="w-full border-2 border-gray-200 rounded-lg focus:border-morandi outline-none p-3 resize-none text-ink placeholder-gray-400 text-sm" placeholder="描述你期望的功能或是改善體驗，大家也可以一起討論！"></textarea>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                    <i class="fa-solid fa-circle-user text-morandi text-base"></i>
+                    <span>許願人：<b id="wish-author-display" class="text-ink">小組成員</b></span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal('wish-modal')" class="px-4 py-2 text-gray-500 hover:text-ink text-sm">取消</button>
+                <button id="btn-submit-wish" onclick="submitWish()" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-xl transition-colors font-medium text-sm shadow-sm flex items-center gap-2">
+                    <span>送出許願</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. 管理員更新願望狀態 Modal -->
+    <div id="admin-wish-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow relative">
+            <div class="washi-tape tape-2"></div>
+            <div class="flex justify-between items-center mb-3 mt-1">
+                <h3 class="text-base font-bold text-ink flex items-center gap-1.5">
+                    <i class="fa-solid fa-gear text-morandi"></i> 更新願望進度
+                </h3>
+                <button onclick="closeModal('admin-wish-modal')" class="text-gray-400 hover:text-ink">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <input type="hidden" id="admin-wish-id">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">當前進度狀態</label>
+                    <select id="admin-wish-status" class="w-full border-2 border-gray-200 rounded-xl p-2.5 text-xs text-ink bg-white outline-none focus:border-morandi">
+                        <option value="pending">💡 許願中 (等待集氣/評估)</option>
+                        <option value="in_progress">🛠️ 實現中 (已排入開發)</option>
+                        <option value="completed">🎉 已實現 (功能已上線)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">管理員開發者備註 (選填)</label>
+                    <textarea id="admin-wish-note" rows="3" class="w-full border-2 border-gray-200 rounded-xl p-2.5 resize-none text-xs text-ink outline-none focus:border-morandi placeholder-gray-400" placeholder="例如：預計下週上線！或：已部署於手帳～"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('admin-wish-modal')" class="px-3.5 py-1.5 text-gray-500 hover:text-ink text-xs">取消</button>
+                <button id="btn-save-admin-wish" onclick="saveAdminWishStatus()" class="bg-morandi hover:bg-morandi-dark text-white px-4 py-1.5 rounded-xl transition-colors text-xs font-medium shadow-sm">
+                    儲存進度
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 4. FIREBASE & 核心邏輯 ==================== -->
+    <script type="module">
+        // 引入 Firebase 12.19.0 官方 CDN 模組
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            getDoc,
+            setDoc,
+            addDoc, 
+            updateDoc, 
+            deleteDoc,
+            onSnapshot, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { 
+            getStorage, 
+            ref, 
+            uploadBytes, 
+            getDownloadURL 
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
+
+        // 1. Firebase 初始化
+        const firebaseConfig = {
+            apiKey: "AIzaSyA58jhPhUAc4zoaVrAAzvJIEOS6T8B1Jek",
+            authDomain: "streamside-tree-backend.firebaseapp.com",
+            projectId: "streamside-tree-backend",
+            storageBucket: "streamside-tree-backend.firebasestorage.app",
+            messagingSenderId: "768444307185",
+            appId: "1:768444307185:web:1dfa39c5508e13f4297b50",
+            measurementId: "G-ES86JTRZ83"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // 核心設定：超級管理員信箱
+        const ADMIN_EMAIL = "hunk123321123@gmail.com";
+
+        // 全域狀態管理
+        let currentUser = null;
+        let isUserAdmin = false;
+        let isUserApproved = false;
+        let allMembers = [];
+        let unsubscribeProposals = null;
+        let unsubscribeRecords = null;
+        let unsubscribeUpdates = null;
+        let unsubscribeMembers = null;
+        let unsubscribeWishes = null;
+        let currentWishFilter = 'all';
+
+        let appData = {
+            proposals: [],
+            records: [],
+            updates: [],
+            wishes: []
+        };
+
+        // 預設歷史提案（雲端資料庫若為空可一鍵寫入）
+        const historicalProposals = [
+            { title: '8月：期初聚會', desc: '日期：2025.08.09', author: '小蓁', votes: 0, voters: [], comments: [], isFinal: true, owner: '小蓁', date: '2025-08-09' },
+            { title: '9月：人生百味桌遊', desc: '', author: '意新', votes: 0, voters: [], comments: [], isFinal: true, owner: '意新', date: '2025-08-09' },
+            { title: '10月：分享追劇', desc: '', author: '小蓁', votes: 0, voters: [], comments: [], isFinal: true, owner: '小蓁', date: '2025-08-09' },
+            { title: '11月：短短的讀經', desc: '', author: '李其', votes: 0, voters: [], comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+            { title: '12月：抱怨職場鳥事 / 火鍋+聖誕餅乾', desc: '', author: '牧凡', votes: 0, voters: [], comments: [], isFinal: true, owner: '牧凡', date: '2025-08-09' },
+            { title: '1月：新年目標', desc: '', author: '涵晴', votes: 0, voters: [], comments: [], isFinal: true, owner: '涵晴', date: '2025-08-09' },
+            { title: '3月：AI輔助查經', desc: '@意新姿聿家', author: '李其', votes: 0, voters: [], comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+            { title: '4月：分享理財', desc: '@牧凡涵晴家', author: '姿聿', votes: 0, voters: [], comments: [], isFinal: true, owner: '姿聿', date: '2025-08-09' },
+            { title: '5月：烘焙坊', desc: '@意新姿聿家', author: '意新', votes: 0, voters: [], comments: [], isFinal: true, owner: '意新', date: '2025-08-09' },
+            { title: '6月：閱讀分享', desc: '@牧凡涵晴家', author: '小蓁、牧凡', votes: 0, voters: [], comments: [], isFinal: true, owner: '小蓁、牧凡', date: '2025-08-09' },
+            { title: '7月：讀書分享', desc: '', author: '姿聿涵晴', votes: 0, voters: [], comments: [], isFinal: true, owner: '姿聿、涵晴', date: '2025-08-09' },
+            { title: '8月：AI在生活中的應用', desc: '', author: '小蓁宇浩', votes: 0, voters: [], comments: [], isFinal: true, owner: '小蓁、宇浩', date: '2025-08-09' },
+            { title: '9月：個人雲修生活分享', desc: '', author: '牧凡', votes: 0, voters: [], comments: [], isFinal: true, owner: '牧凡', date: '2025-08-09' },
+            { title: '10月：野餐&一人一菜', desc: '', author: '李其', votes: 0, voters: [], comments: [], isFinal: true, owner: '李其', date: '2025-08-09' },
+            { title: '11月：爬山or運動會', desc: '', author: '傑昕', votes: 0, voters: [], comments: [], isFinal: true, owner: '傑昕', date: '2025-08-09' },
+            { title: '12月：年度回顧+新年新希望', desc: '', author: '涵晴', votes: 0, voters: [], comments: [], isFinal: true, owner: '涵晴', date: '2025-08-09' }
+        ];
+
+        // 工具函式
+        function getTodayDate() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function showStatus(msg, autoHide = 4000) {
+            const bar = document.getElementById('status-bar');
+            const msgEl = document.getElementById('status-message');
+            if (!bar || !msgEl) return;
+            msgEl.innerHTML = msg;
+            bar.classList.remove('hidden');
+            if (autoHide) {
+                setTimeout(() => {
+                    bar.classList.add('hidden');
+                }, autoHide);
+            }
+        }
+
+        // ==================== 5. 門禁權限與身分切換 ====================
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (!user) {
+                // 未登入：鎖定於門禁畫面，清理所有手帳連線
+                isUserAdmin = false;
+                isUserApproved = false;
+                cleanupListeners();
+                renderGatekeeper('guest');
+                return;
+            }
+
+            // 檢查是否為超級管理員
+            const userEmail = (user.email || '').toLowerCase().trim();
+            isUserAdmin = (userEmail === ADMIN_EMAIL.toLowerCase().trim());
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin text-morandi"></i> 驗證小組權限中...', 0);
+
+                const memberRef = doc(db, 'members', user.uid);
+                const memberSnap = await getDoc(memberRef);
+
+                if (isUserAdmin) {
+                    // 若是 Admin，確保在資料庫中標記為 approved
+                    if (!memberSnap.exists() || memberSnap.data().status !== 'approved') {
+                        await setDoc(memberRef, {
+                            email: user.email,
+                            displayName: user.displayName || '管理員',
+                            photoURL: user.photoURL || '',
+                            role: 'admin',
+                            status: 'approved',
+                            approvedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
+                    isUserApproved = true;
+                    unlockApp();
+                    listenToMembers(); // 管理員啟動審核名單即時監聽
+                    showStatus('👋 歡迎管理員登入！', 2500);
+                } else if (memberSnap.exists()) {
+                    const data = memberSnap.data();
+                    if (data.status === 'approved') {
+                        isUserApproved = true;
+                        unlockApp();
+                        showStatus(`✨ 歡迎回來，${user.displayName || '成員'}！`, 2500);
+                    } else if (data.status === 'pending') {
+                        isUserApproved = false;
+                        renderGatekeeper('pending');
+                        document.getElementById('status-bar').classList.add('hidden');
+                    } else if (data.status === 'rejected') {
+                        isUserApproved = false;
+                        renderGatekeeper('rejected');
+                        document.getElementById('status-bar').classList.add('hidden');
+                    }
+                } else {
+                    // 尚未送出過申請
+                    isUserApproved = false;
+                    renderGatekeeper('apply');
+                    document.getElementById('status-bar').classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("驗證會員權限錯誤:", err);
+                showStatus(`<span class="text-red-500"><i class="fa-solid fa-triangle-exclamation"></i> 驗證失敗: ${err.message}</span>`, 6000);
+            }
+        });
+
+        // 渲染門禁畫面 (Gatekeeper) 各種狀態
+        function renderGatekeeper(state) {
+            document.getElementById('view-app').classList.add('hidden');
+            document.getElementById('view-gatekeeper').classList.remove('hidden');
+
+            const gateIcon = document.getElementById('gate-icon');
+            const gateTitle = document.getElementById('gate-title');
+            const gateDesc = document.getElementById('gate-desc');
+            const userBox = document.getElementById('gate-user-box');
+            const actions = document.getElementById('gate-actions');
+
+            if (state === 'guest') {
+                gateIcon.className = "fa-solid fa-lock";
+                gateTitle.innerHTML = '我們的手帳 <span class="text-milktea font-handwriting text-3xl">Scrapbook</span>';
+                gateDesc.innerHTML = '這是成青小組的私人手帳空間。<br>為防止未授權存取與攻擊，請先使用 Google 帳號登入。';
+                userBox.classList.add('hidden');
+                actions.innerHTML = `
+                    <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white text-ink border-2 border-gray-200 hover:border-morandi hover:bg-gray-50 py-3 px-5 rounded-2xl font-semibold shadow-sm transition-all text-sm">
+                        <i class="fa-brands fa-google text-red-500 text-lg"></i>
+                        <span>使用 Google 帳號登入</span>
+                    </button>
+                `;
+            } else {
+                userBox.classList.remove('hidden');
+                document.getElementById('gate-user-avatar').src = currentUser.photoURL || 'https://placehold.co/100x100/d4b59e/ffffff?text=U';
+                document.getElementById('gate-user-name').innerText = currentUser.displayName || 'Google 使用者';
+                document.getElementById('gate-user-email').innerText = currentUser.email || '';
+
+                if (state === 'apply') {
+                    gateIcon.className = "fa-solid fa-envelope-open-text text-milktea-dark";
+                    gateTitle.innerText = "申請加入小組手帳 📝";
+                    gateDesc.innerHTML = `您好！您的 Google 帳號尚未在小組手帳名單中。<br>點擊下方按鈕即可向管理員送出加入申請。`;
+                    actions.innerHTML = `
+                        <button onclick="applyForMembership()" class="w-full bg-morandi hover:bg-morandi-dark text-white py-3 px-5 rounded-2xl font-semibold shadow-sm transition-all text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>送出加入申請</span>
+                        </button>
+                        <button onclick="logout()" class="w-full text-xs text-gray-400 hover:text-red-500 py-2 transition-colors">
+                            切換其他 Google 帳號 / 登出
+                        </button>
+                    `;
+                } else if (state === 'pending') {
+                    gateIcon.className = "fa-solid fa-hourglass-half text-yellow-500";
+                    gateTitle.innerText = "申請審核中 ⏳";
+                    gateDesc.innerHTML = `您的加入申請已送出！<br>目前正在等待管理員 (<b class="text-ink">${ADMIN_EMAIL}</b>) 核可。<br>請提醒管理員核可後即可進入。`;
+                    actions.innerHTML = `
+                        <button onclick="location.reload()" class="w-full bg-milktea hover:bg-milktea-dark text-white py-3 px-5 rounded-2xl font-semibold shadow-sm transition-all text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>重新整理檢查狀態</span>
+                        </button>
+                        <button onclick="logout()" class="w-full text-xs text-gray-400 hover:text-red-500 py-2 transition-colors">
+                            登出帳號
+                        </button>
+                    `;
+                } else if (state === 'rejected') {
+                    gateIcon.className = "fa-solid fa-ban text-red-500";
+                    gateTitle.innerText = "未通過審核 🚫";
+                    gateDesc.innerHTML = `抱歉，您的加入申請未獲核准。<br>如有疑問請與小組管理員聯繫。`;
+                    actions.innerHTML = `
+                        <button onclick="logout()" class="w-full bg-gray-100 hover:bg-gray-200 text-ink py-2.5 px-5 rounded-2xl font-semibold transition-all text-xs">
+                            登出帳號
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        // 解鎖進入手帳
+        function unlockApp() {
+            document.getElementById('view-gatekeeper').classList.add('hidden');
+            document.getElementById('view-app').classList.remove('hidden');
+            
+            renderAuthUI();
+            listenToProposals();
+            listenToRecords();
+            listenToUpdates();
+            listenToWishes();
+        }
+
+        // 清理即時監聽器
+        function cleanupListeners() {
+            if (unsubscribeProposals) unsubscribeProposals();
+            if (unsubscribeRecords) unsubscribeRecords();
+            if (unsubscribeUpdates) unsubscribeUpdates();
+            if (unsubscribeMembers) unsubscribeMembers();
+            if (unsubscribeWishes) unsubscribeWishes();
+        }
+
+        // 送出申請
+        async function applyForMembership() {
+            if (!currentUser) return;
+            showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在送出申請...', 0);
+            try {
+                const memberRef = doc(db, 'members', currentUser.uid);
+                await setDoc(memberRef, {
+                    email: currentUser.email,
+                    displayName: currentUser.displayName || '小組成員',
+                    photoURL: currentUser.photoURL || '',
+                    role: 'member',
+                    status: 'pending',
+                    appliedAt: serverTimestamp()
+                });
+
+                // 發送 Email 即時通知管理員 (非同步背景執行，不阻塞畫面)
+                const NOTIFICATION_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCSo7sMGuQimiRs4UN72A1l8KzeAKI2JxRprxV_93LZRxm2hxwc-SBfCxcol_nUTQ/exec";
+                fetch(NOTIFICATION_WEBHOOK_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        applicantName: currentUser.displayName || '小組訪客',
+                        applicantEmail: currentUser.email || '未提供信箱',
+                        applyTime: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
+                    })
+                }).catch(err => console.warn("管理員信件通知發送失敗:", err));
+
+                renderGatekeeper('pending');
+                showStatus('🎉 申請已送出！請等待管理員審核', 4000);
+            } catch (err) {
+                console.error("申請失敗:", err);
+                alert("送出申請失敗：" + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        async function loginWithGoogle() {
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin text-morandi"></i> 正在開啟 Google 登入...', 0);
+                await signInWithPopup(auth, googleProvider);
+            } catch (err) {
+                console.error("登入失敗:", err);
+                if (err.code !== 'auth/popup-closed-by-user') {
+                    alert('登入失敗：' + (err.message || err.code));
+                }
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        async function logout() {
+            try {
+                await signOut(auth);
+                location.reload();
+            } catch (err) {
+                console.error("登出失敗:", err);
+            }
+        }
+
+        // ==================== 6. 管理員審核系統 ====================
+        function listenToMembers() {
+            if (!isUserAdmin) return;
+            unsubscribeMembers = onSnapshot(collection(db, 'members'), (snapshot) => {
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ uid: docSnap.id, ...docSnap.data() });
+                });
+                allMembers = list;
+                renderAdminPanel();
+                renderAuthUI(); // 更新審核 badge 數量
+            }, (err) => {
+                console.error("監聽成員清單失敗:", err);
+            });
+        }
+
+        function renderAdminPanel() {
+            const pendingList = allMembers.filter(m => m.status === 'pending');
+            const approvedList = allMembers.filter(m => m.status === 'approved');
+
+            const pendingCountEl = document.getElementById('pending-count');
+            const approvedCountEl = document.getElementById('approved-count');
+            if (pendingCountEl) pendingCountEl.innerText = pendingList.length;
+            if (approvedCountEl) approvedCountEl.innerText = approvedList.length;
+
+            const pendingContainer = document.getElementById('pending-members-list');
+            const approvedContainer = document.getElementById('approved-members-list');
+
+            if (pendingContainer) {
+                if (pendingList.length === 0) {
+                    pendingContainer.innerHTML = '<p class="text-xs text-gray-400 italic py-2">目前沒有等待審核的申請 🙌</p>';
+                } else {
+                    pendingContainer.innerHTML = pendingList.map(m => `
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-yellow-50/80 border border-yellow-200">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <img src="${m.photoURL || 'https://placehold.co/100x100/d4b59e/ffffff?text=U'}" class="w-8 h-8 rounded-full object-cover border border-milktea" alt="avatar">
+                                <div class="min-w-0">
+                                    <p class="font-bold text-xs text-ink truncate">${m.displayName || '未具名'}</p>
+                                    <p class="text-[11px] text-gray-500 truncate">${m.email}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-1.5 ml-2">
+                                <button onclick="approveMember('${m.uid}')" class="bg-morandi hover:bg-morandi-dark text-white px-3 py-1 rounded-lg text-xs font-semibold shadow-sm transition-colors">
+                                    核可
+                                </button>
+                                <button onclick="rejectMember('${m.uid}')" class="bg-gray-200 hover:bg-red-500 hover:text-white text-gray-600 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors">
+                                    拒絕
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            if (approvedContainer) {
+                approvedContainer.innerHTML = approvedList.map(m => `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <img src="${m.photoURL || 'https://placehold.co/100x100/d4b59e/ffffff?text=U'}" class="w-6 h-6 rounded-full object-cover">
+                            <span class="font-medium text-ink truncate">${m.displayName || '成員'}</span>
+                            <span class="text-gray-400 text-[11px] truncate">(${m.email})</span>
+                            ${m.role === 'admin' ? '<span class="bg-morandi/20 text-morandi-dark text-[10px] font-bold px-1.5 py-0.5 rounded">管理員</span>' : ''}
+                        </div>
+                        ${m.role !== 'admin' ? `
+                            <button onclick="removeMember('${m.uid}')" title="移除授權" class="text-gray-400 hover:text-red-500 transition-colors px-1">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function approveMember(uid) {
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 核可中...', 0);
+                await updateDoc(doc(db, 'members', uid), {
+                    status: 'approved',
+                    approvedAt: serverTimestamp()
+                });
+                showStatus('✅ 已成功核可該成員！', 3000);
+            } catch (err) {
+                alert('核可失敗：' + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        async function rejectMember(uid) {
+            if (!confirm('確定要拒絕此申請嗎？')) return;
+            try {
+                await updateDoc(doc(db, 'members', uid), {
+                    status: 'rejected'
+                });
+                showStatus('已拒絕該申請', 2500);
+            } catch (err) {
+                alert('操作失敗：' + err.message);
+            }
+        }
+
+        async function removeMember(uid) {
+            if (!confirm('確定要撤銷此成員的存取權限嗎？該成員將無法再進入手帳。')) return;
+            try {
+                await deleteDoc(doc(db, 'members', uid));
+                showStatus('已移除該成員存取權限', 2500);
+            } catch (err) {
+                alert('移除失敗：' + err.message);
+            }
+        }
+
+        // ==================== 7. 導覽列 UI 呈現 ====================
+        function renderAuthUI() {
+            const desktopContainer = document.getElementById('desktop-auth-container');
+            const mobileContainer = document.getElementById('mobile-auth-container');
+
+            if (!currentUser) return;
+
+            const photo = currentUser.photoURL || 'https://placehold.co/100x100/d4b59e/ffffff?text=U';
+            const name = currentUser.displayName || '小組成員';
+            const pendingCount = allMembers.filter(m => m.status === 'pending').length;
+
+            const adminBadgeHtml = isUserAdmin ? `
+                <button onclick="openModal('admin-modal')" class="relative flex items-center gap-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-300/80 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm">
+                    <i class="fa-solid fa-user-shield text-xs"></i>
+                    <span>成員審核</span>
+                    ${pendingCount > 0 ? `<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.2 rounded-full animate-bounce">${pendingCount}</span>` : ''}
+                </button>
+            ` : '';
+
+            const userPillHtml = `
+                <div class="flex items-center gap-2 bg-white/90 border border-gray-200/80 rounded-full py-1 pl-1.5 pr-3 shadow-sm">
+                    <img src="${photo}" class="w-7 h-7 rounded-full object-cover border border-morandi" alt="${name}">
+                    <span class="text-xs font-semibold text-ink max-w-[100px] truncate">${name}</span>
+                    <button onclick="logout()" title="登出" class="text-gray-400 hover:text-red-500 transition-colors ml-1 p-0.5">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                    </button>
+                </div>
+            `;
+
+            if (desktopContainer) desktopContainer.innerHTML = `${adminBadgeHtml} ${userPillHtml}`;
+            if (mobileContainer) mobileContainer.innerHTML = `${adminBadgeHtml} ${userPillHtml}`;
+
+            // 更新 Modal 發佈人欄位
+            const displayName = currentUser ? (currentUser.displayName || '已登入小組成員') : '已登入小組成員';
+            if (document.getElementById('prop-author-display')) document.getElementById('prop-author-display').innerText = displayName;
+            if (document.getElementById('photo-author-display')) document.getElementById('photo-author-display').innerText = displayName;
+            if (document.getElementById('upd-author-display')) document.getElementById('upd-author-display').innerText = displayName;
+            if (document.getElementById('wish-author-display')) document.getElementById('wish-author-display').innerText = displayName;
+        }
+
+        // ==================== 8. FIRESTORE 業務邏輯監聽 ====================
+        function listenToProposals() {
+            unsubscribeProposals = onSnapshot(collection(db, 'proposals'), (snapshot) => {
+                const loadingEl = document.getElementById('proposals-loading');
+                if (loadingEl) loadingEl.classList.add('hidden');
+                
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                list.sort((a, b) => {
+                    if (b.isFinal !== a.isFinal) return b.isFinal ? 1 : -1;
+                    const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.date ? new Date(a.date).getTime() : 0);
+                    const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.date ? new Date(b.date).getTime() : 0);
+                    return tB - tA;
+                });
+
+                appData.proposals = list;
+
+                // 若為空顯示一鍵匯入歷史資料按鈕
+                const seedBtn = document.getElementById('btn-seed-data');
+                if (seedBtn) {
+                    if (list.length === 0) {
+                        seedBtn.classList.remove('hidden');
+                        seedBtn.classList.add('flex');
+                    } else {
+                        seedBtn.classList.add('hidden');
+                        seedBtn.classList.remove('flex');
+                    }
+                }
+
+                renderProposals();
+            }, (error) => {
+                console.error("提案即時同步錯誤:", error);
+                showStatus(`<span class="text-red-500"><i class="fa-solid fa-triangle-exclamation"></i> 載入提案失敗: ${error.message}</span>`, 6000);
+            });
+        }
+
+        function listenToRecords() {
+            unsubscribeRecords = onSnapshot(collection(db, 'records'), (snapshot) => {
+                const loadingEl = document.getElementById('records-loading');
+                if (loadingEl) loadingEl.classList.add('hidden');
+                
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                list.sort((a, b) => {
+                    const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.date ? new Date(a.date).getTime() : 0);
+                    const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.date ? new Date(b.date).getTime() : 0);
+                    return tB - tA;
+                });
+
+                appData.records = list;
+                renderRecords();
+            }, (error) => {
+                console.error("紀錄同步錯誤:", error);
+            });
+        }
+
+        function listenToUpdates() {
+            unsubscribeUpdates = onSnapshot(collection(db, 'updates'), (snapshot) => {
+                const loadingEl = document.getElementById('updates-loading');
+                if (loadingEl) loadingEl.classList.add('hidden');
+
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                list.sort((a, b) => {
+                    const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.date ? new Date(a.date).getTime() : 0);
+                    const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.date ? new Date(b.date).getTime() : 0);
+                    return tB - tA;
+                });
+
+                appData.updates = list;
+                renderUpdates();
+            }, (error) => {
+                console.error("日常動態同步錯誤:", error);
+            });
+        }
+
+        function listenToWishes() {
+            unsubscribeWishes = onSnapshot(collection(db, 'wishes'), (snapshot) => {
+                const loadingEl = document.getElementById('wishes-loading');
+                if (loadingEl) loadingEl.classList.add('hidden');
+
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                list.sort((a, b) => {
+                    const likesA = Array.isArray(a.likes) ? a.likes.length : 0;
+                    const likesB = Array.isArray(b.likes) ? b.likes.length : 0;
+                    if (likesB !== likesA) return likesB - likesA;
+                    const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                    const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                    return tB - tA;
+                });
+
+                appData.wishes = list;
+                renderWishes();
+            }, (error) => {
+                console.error("許願池即時同步錯誤:", error);
+            });
+        }
+
+        // ==================== 9. 渲染頁面內容 ====================
+        function renderProposals() {
+            const container = document.getElementById('proposals-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (appData.proposals.length === 0) {
+                container.className = "w-full";
+                container.innerHTML = `
+                    <div class="w-full bg-white/85 border-2 border-dashed border-milktea rounded-3xl p-10 text-center my-6 shadow-sm">
+                        <i class="fa-regular fa-lightbulb text-milktea text-4xl mb-3"></i>
+                        <h3 class="text-lg font-bold text-ink">目前還沒有任何提案點子喔！</h3>
+                        <p class="text-sm text-gray-500 mt-1 mb-5">點擊上方「+ 新增提案」或是匯入既有的歷史手帳提案吧！</p>
+                        <button onclick="openModal('proposal-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2.5 rounded-full text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>馬上提出第一個點子</span>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
+
+            appData.proposals.forEach(prop => {
+                const isFinalBadge = prop.isFinal 
+                    ? `<div class="absolute -top-3 -right-3 bg-red-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow transform rotate-12 z-20"><i class="fa-solid fa-crown"></i> 本月決定</div>`
+                    : '';
+
+                const ownerInfo = prop.isFinal
+                    ? `<div class="mt-3 bg-yellow-50/90 border border-yellow-200 p-2.5 rounded-xl text-sm text-yellow-800 flex items-center gap-2"><i class="fa-solid fa-user-check text-yellow-600"></i> 負責人：<b>${prop.owner || '未指定'}</b></div>`
+                    : `<button onclick="openFinalizeModal('${prop.id}')" class="mt-3 text-xs text-morandi hover:text-morandi-dark underline flex items-center gap-1 font-medium"><i class="fa-solid fa-check"></i> 設為最終決定</button>`;
+                
+                const voters = prop.voters || [];
+                const hasVoted = currentUser && voters.includes(currentUser.uid);
+                const voteCount = typeof prop.votes === 'number' ? prop.votes : voters.length;
+
+                // 權限判斷：管理員可管理所有提案(含歷史匯入)，一般成員可管理自己的提案
+                const canManage = isUserAdmin || (currentUser && (
+                    prop.authorUid === currentUser.uid || 
+                    (!prop.authorUid && prop.author === currentUser.displayName)
+                ));
+
+                const manageButtons = canManage ? `
+                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+                        <button onclick="openEditProposalModal('${prop.id}')" class="text-xs text-gray-600 hover:text-morandi-dark hover:bg-morandi/15 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-medium border border-gray-200 bg-white" title="編輯此提案內容">
+                            <i class="fa-regular fa-pen-to-square"></i> 編輯
+                        </button>
+                        <button onclick="deleteProposal('${prop.id}')" class="text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1" title="刪除此提案">
+                            <i class="fa-regular fa-trash-can"></i> 刪除
+                        </button>
+                    </div>
+                ` : '';
+
+                let commentsHtml = (prop.comments || []).map(c => `
+                    <div class="bg-gray-50/90 border border-gray-100 p-2 rounded-lg mb-1.5 text-xs flex items-start gap-2">
+                        ${c.authorPhoto ? `<img src="${c.authorPhoto}" class="w-5 h-5 rounded-full object-cover mt-0.5" onerror="this.style.display='none'">` : '<i class="fa-solid fa-circle-user text-gray-400 mt-0.5"></i>'}
+                        <div class="flex-1">
+                            <span class="font-bold text-ink">${c.author}:</span>
+                            <span class="text-gray-700 ml-1">${c.text}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-5 card-shadow relative ${prop.isFinal ? 'border-4 border-yellow-200' : 'border border-gray-100'} flex flex-col justify-between">
+                        ${prop.isFinal ? '<div class="washi-tape tape-2"></div>' : '<div class="washi-tape tape-1"></div>'}
+                        ${isFinalBadge}
+                        <div>
+                            <div class="flex justify-between items-start mt-2">
+                                <div class="flex-1 pr-2">
+                                    <h3 class="text-xl font-bold text-ink mb-1.5 leading-snug">${prop.title}</h3>
+                                    <p class="text-xs text-gray-400 mb-2 flex items-center gap-1.5">
+                                        <i class="fa-regular fa-user"></i> ${prop.author || '匿名'} · ${prop.date || ''}
+                                    </p>
+                                </div>
+                                <button onclick="voteProposal('${prop.id}')" class="flex flex-col items-center ${hasVoted ? 'bg-red-50 border-red-200' : 'bg-gray-50 hover:bg-red-50 border-gray-100'} p-2 rounded-xl transition-all border min-w-[62px]">
+                                    <i class="fa-solid fa-heart ${hasVoted ? 'text-red-500 scale-110' : 'text-gray-300'} mb-0.5 text-lg transition-transform"></i>
+                                    <span class="font-bold text-xs ${hasVoted ? 'text-red-500' : 'text-ink'}">${voteCount} 票</span>
+                                </button>
+                            </div>
+                            ${prop.desc ? `<p class="text-sm text-gray-700 mb-3 whitespace-pre-wrap leading-relaxed">${prop.desc}</p>` : ''}
+                            ${ownerInfo}
+                            ${manageButtons}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <hr class="my-3 border-dashed border-gray-200">
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-gray-500 flex items-center gap-1">
+                                    <i class="fa-regular fa-comments"></i> 討論區 (${(prop.comments || []).length})
+                                </h4>
+                                <div class="max-h-28 overflow-y-auto pr-1">
+                                    ${commentsHtml || '<p class="text-xs text-gray-400 italic py-1">還沒有人留言，來當第一個吧～</p>'}
+                                </div>
+                                <div class="flex gap-2 mt-2">
+                                    <input type="text" id="comment-input-${prop.id}" onkeydown="if(event.key==='Enter')addComment('${prop.id}')" 
+                                           class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-morandi" 
+                                           placeholder="發表討論想法...">
+                                    <button onclick="addComment('${prop.id}')" class="bg-gray-200 hover:bg-morandi hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                                        送出
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function renderRecords() {
+            const container = document.getElementById('records-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (appData.records.length === 0) {
+                container.className = "w-full";
+                container.innerHTML = `
+                    <div class="w-full bg-white/85 border-2 border-dashed border-morandi rounded-3xl p-10 text-center my-6 shadow-sm">
+                        <i class="fa-solid fa-camera-retro text-morandi text-4xl mb-3"></i>
+                        <h3 class="text-lg font-bold text-ink">相片牆還是空的唷！</h3>
+                        <p class="text-sm text-gray-500 mt-1 mb-5">點擊上方「+ 貼照片」，挑選照片貼上吧！</p>
+                        <button onclick="openModal('photo-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2.5 rounded-full text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>馬上貼第一張照片</span>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.className = "masonry";
+
+            appData.records.forEach((rec, index) => {
+                const rotation = (index % 2 === 0) ? ((index % 3) * 1.5 - 1.5) : (-1 * (index % 3) * 1.5 + 1);
+                const canManageRec = isUserAdmin || (currentUser && rec.authorUid === currentUser.uid);
+                const deleteRecBtn = canManageRec ? `
+                    <button onclick="deleteRecord('${rec.id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="刪除此紀錄">
+                        <i class="fa-regular fa-trash-can text-xs"></i>
+                    </button>
+                ` : '';
+                
+                if (rec.type === 'photo') {
+                    const cardHtml = `
+                        <div class="masonry-item">
+                            <div class="polaroid" style="transform: rotate(${rotation}deg);">
+                                <div class="washi-tape tape-1"></div>
+                                <img src="${rec.url}" loading="lazy" onerror="this.src='https://placehold.co/400x300/f3f4f6/a3b19b?text=Image+Loaded+Failed'" class="w-full aspect-[4/3] object-cover bg-gray-100 rounded-sm" alt="活動相片">
+                                <div class="mt-3 text-center">
+                                    <p class="font-handwriting text-xl text-ink leading-tight">${rec.text || '✨ 美好的時光'}</p>
+                                    <div class="text-[11px] text-gray-400 mt-1.5 flex items-center justify-center gap-1.5">
+                                        <span><i class="fa-regular fa-clock"></i> ${rec.date || ''} · 來自 ${rec.author || '小組成員'}</span>
+                                        ${deleteRecBtn}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                } else if (rec.type === 'material') {
+                    const cardHtml = `
+                        <div class="masonry-item">
+                            <div class="relative group">
+                                <a href="${rec.url}" target="_blank" rel="noopener noreferrer" class="block bg-milktea text-white p-5 rounded-xl card-shadow border-2 border-dashed border-white transform transition hover:scale-[1.02]" style="transform: rotate(${rotation/2}deg);">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fa-solid fa-paperclip text-2xl"></i>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-bold text-base line-clamp-1">${rec.text}</h4>
+                                            <p class="text-xs opacity-90 mt-1">點擊開啟外部連結 · ${rec.author || '管理員'}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                ${canManageRec ? `
+                                    <button onclick="deleteRecord('${rec.id}')" class="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-500 hover:text-red-500 w-7 h-7 rounded-full flex items-center justify-center shadow-sm text-xs transition-colors" title="刪除素材">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                }
+            });
+        }
+
+        function renderUpdates() {
+            const container = document.getElementById('updates-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (appData.updates.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white/70 border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center my-4">
+                        <i class="fa-regular fa-comment-dots text-gray-400 text-4xl mb-3"></i>
+                        <h3 class="text-lg font-bold text-ink">還沒有人發佈日常動態</h3>
+                        <p class="text-sm text-gray-500 mt-1 mb-4">今天遇到什麼有趣的事情嗎？寫下來分享給小組吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            appData.updates.forEach(upd => {
+                const imgHtml = upd.imgUrl 
+                    ? `<div class="mt-3 overflow-hidden rounded-xl border border-gray-100 max-h-80 bg-gray-50">
+                         <img src="${upd.imgUrl}" loading="lazy" class="w-full h-full object-cover">
+                       </div>`
+                    : '';
+                
+                const authorInitial = upd.author ? upd.author.charAt(0) : '友';
+                const avatarImg = upd.authorPhoto 
+                    ? `<img src="${upd.authorPhoto}" class="w-10 h-10 rounded-full object-cover border border-gray-200" onerror="this.style.display='none'">`
+                    : `<div class="w-10 h-10 rounded-full bg-milktea text-white flex items-center justify-center font-bold text-sm shadow-sm">${authorInitial}</div>`;
+
+                const canManageUpd = isUserAdmin || (currentUser && upd.authorUid === currentUser.uid);
+                const deleteUpdBtn = canManageUpd ? `
+                    <button onclick="deleteUpdate('${upd.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="刪除此動態">
+                        <i class="fa-regular fa-trash-can text-xs"></i>
+                    </button>
+                ` : '';
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-6 card-shadow border-l-4 border-ink relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                ${avatarImg}
+                                <div>
+                                    <h4 class="font-bold text-ink text-sm">${upd.author || '小組成員'}</h4>
+                                    <p class="text-[11px] text-gray-400">${upd.date || ''}</p>
+                                </div>
+                            </div>
+                            ${deleteUpdBtn}
+                        </div>
+                        <p class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">${upd.text}</p>
+                        ${imgHtml}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function filterWishes(status) {
+            currentWishFilter = status;
+            ['all', 'pending', 'in_progress', 'completed'].forEach(s => {
+                const btn = document.getElementById(`wish-filter-${s}`);
+                if (btn) {
+                    if (s === status) {
+                        btn.className = "wish-filter-btn px-3.5 py-1.5 rounded-full font-semibold transition-all bg-morandi text-white shadow-sm";
+                    } else {
+                        btn.className = "wish-filter-btn px-3.5 py-1.5 rounded-full font-medium transition-all bg-white text-gray-600 hover:bg-gray-50 border border-gray-200";
+                    }
+                }
+            });
+            renderWishes();
+        }
+
+        function renderWishes() {
+            const container = document.getElementById('wishes-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let list = appData.wishes || [];
+            if (currentWishFilter !== 'all') {
+                list = list.filter(w => w.status === currentWishFilter);
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-white/80 border-2 border-dashed border-yellow-200 rounded-3xl p-10 text-center my-4 shadow-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 text-4xl mb-3"></i>
+                        <h3 class="text-lg font-bold text-ink">目前沒有符合的許願項目</h3>
+                        <p class="text-sm text-gray-500 mt-1 mb-5">點擊上方「+ 我要許願」，成為第一個許下願望的人吧！</p>
+                        <button onclick="openModal('wish-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2.5 rounded-full text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>寫下第一個願望</span>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            list.forEach(w => {
+                const likes = Array.isArray(w.likes) ? w.likes : [];
+                const hasLiked = currentUser && likes.includes(currentUser.uid);
+                const likeCount = likes.length;
+
+                let statusBadge = '';
+                if (w.status === 'completed') {
+                    statusBadge = `<span class="bg-green-100 text-green-700 border border-green-200 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> 已實現</span>`;
+                } else if (w.status === 'in_progress') {
+                    statusBadge = `<span class="bg-blue-100 text-blue-700 border border-blue-200 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-wrench"></i> 實現中</span>`;
+                } else {
+                    statusBadge = `<span class="bg-yellow-100 text-yellow-800 border border-yellow-200 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-lightbulb"></i> 許願中</span>`;
+                }
+
+                const canDelete = isUserAdmin || (currentUser && w.authorUid === currentUser.uid);
+
+                const adminControls = isUserAdmin ? `
+                    <button onclick="openAdminWishModal('${w.id}')" class="text-xs text-morandi-dark hover:text-ink font-semibold flex items-center gap-1 hover:underline">
+                        <i class="fa-solid fa-gear"></i> 管理狀態
+                    </button>
+                ` : '';
+
+                const adminNoteHtml = w.adminNote ? `
+                    <div class="mt-3 bg-yellow-50/80 border border-yellow-200/80 p-2.5 rounded-xl text-xs text-yellow-900 flex items-start gap-2">
+                        <i class="fa-solid fa-bullhorn text-yellow-600 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold">管理員小筆記：</span>
+                            <span>${w.adminNote}</span>
+                        </div>
+                    </div>
+                ` : '';
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-5 card-shadow border border-gray-100 relative flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div class="washi-tape tape-3"></div>
+                        <div>
+                            <div class="flex justify-between items-start mt-2 mb-2 gap-2">
+                                <h3 class="text-base font-bold text-ink leading-snug flex-1">${w.title}</h3>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-xs text-gray-400 mb-2 flex items-center gap-1.5">
+                                <i class="fa-regular fa-user"></i> ${w.author || '匿名'} · ${w.date || ''}
+                            </p>
+                            ${w.desc ? `<p class="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">${w.desc}</p>` : ''}
+                            ${adminNoteHtml}
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                ${adminControls}
+                                ${canDelete ? `
+                                    <button onclick="deleteWish('${w.id}')" class="text-gray-400 hover:text-red-500 text-xs p-1" title="刪除此願望">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+
+                            <button onclick="likeWish('${w.id}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-xs font-semibold ${hasLiked ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-yellow-50'}">
+                                <i class="fa-solid fa-wand-magic-sparkles ${hasLiked ? 'text-yellow-500' : 'text-gray-400'}"></i>
+                                <span>+1 集氣 (${likeCount})</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // ==================== 10. 提案/投票/留言/上傳邏輯 ====================
+        async function submitProposal() {
+            if (!currentUser || !isUserApproved) return;
+            const title = document.getElementById('prop-title').value.trim();
+            const desc = document.getElementById('prop-desc').value.trim();
+            if (!title) { alert('請填寫聚會標題！'); return; }
+
+            const btn = document.getElementById('btn-submit-proposal');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+            try {
+                await addDoc(collection(db, 'proposals'), {
+                    title,
+                    desc,
+                    author: currentUser.displayName || '小組成員',
+                    authorPhoto: currentUser.photoURL || '',
+                    authorUid: currentUser.uid,
+                    votes: 0,
+                    voters: [],
+                    comments: [],
+                    isFinal: false,
+                    owner: '',
+                    date: getTodayDate(),
+                    createdAt: serverTimestamp()
+                });
+                closeModal('proposal-modal');
+                showStatus('✨ 提案已成功貼上提案板！', 3000);
+            } catch (err) {
+                alert("新增提案失敗：" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>送出貼上</span>';
+            }
+        }
+
+        async function voteProposal(id) {
+            if (!currentUser || !isUserApproved) return;
+            const prop = appData.proposals.find(p => p.id === id);
+            if (!prop) return;
+
+            const voters = Array.isArray(prop.voters) ? [...prop.voters] : [];
+            const userIndex = voters.indexOf(currentUser.uid);
+            let newVotes = typeof prop.votes === 'number' ? prop.votes : voters.length;
+
+            if (userIndex > -1) {
+                voters.splice(userIndex, 1);
+                newVotes = Math.max(0, newVotes - 1);
+            } else {
+                voters.push(currentUser.uid);
+                newVotes += 1;
+            }
+
+            try {
+                await updateDoc(doc(db, 'proposals', id), {
+                    voters: voters,
+                    votes: newVotes
+                });
+            } catch (err) {
+                alert("投票失敗：" + err.message);
+            }
+        }
+
+        async function addComment(id) {
+            if (!currentUser || !isUserApproved) return;
+            const input = document.getElementById(`comment-input-${id}`);
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
+
+            const prop = appData.proposals.find(p => p.id === id);
+            if (!prop) return;
+
+            const existingComments = Array.isArray(prop.comments) ? [...prop.comments] : [];
+            existingComments.push({
+                author: currentUser.displayName || '小組成員',
+                authorPhoto: currentUser.photoURL || '',
+                authorUid: currentUser.uid,
+                text: text,
+                date: getTodayDate()
+            });
+
+            try {
+                input.value = '';
+                await updateDoc(doc(db, 'proposals', id), {
+                    comments: existingComments
+                });
+            } catch (err) {
+                alert("留言發表失敗：" + err.message);
+            }
+        }
+
+        function openFinalizeModal(id) {
+            if (!currentUser || !isUserApproved) return;
+            document.getElementById('final-prop-id').value = id;
+            openModal('finalize-modal');
+        }
+
+        async function confirmFinalize() {
+            const id = document.getElementById('final-prop-id').value;
+            const owner = document.getElementById('final-owner').value.trim() || (currentUser ? currentUser.displayName : '負責人');
+            
+            const btn = document.getElementById('btn-confirm-finalize');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 設定中...';
+
+            try {
+                await updateDoc(doc(db, 'proposals', id), {
+                    isFinal: true,
+                    owner: owner
+                });
+                closeModal('finalize-modal');
+                showStatus('🎉 已成功設定本月聚會決定！', 3000);
+            } catch (err) {
+                alert("設定失敗：" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '確認決定';
+            }
+        }
+
+        // 提案編輯與刪除邏輯
+        function openEditProposalModal(id) {
+            if (!currentUser || !isUserApproved) return;
+            const prop = appData.proposals.find(p => p.id === id);
+            if (!prop) return;
+
+            document.getElementById('edit-prop-id').value = id;
+            document.getElementById('edit-prop-title').value = prop.title || '';
+            document.getElementById('edit-prop-desc').value = prop.desc || '';
+            document.getElementById('edit-prop-owner').value = prop.owner || '';
+            document.getElementById('edit-prop-isfinal').checked = !!prop.isFinal;
+
+            openModal('edit-proposal-modal');
+        }
+
+        async function saveProposalEdit() {
+            if (!currentUser || !isUserApproved) return;
+            const id = document.getElementById('edit-prop-id').value;
+            const title = document.getElementById('edit-prop-title').value.trim();
+            const desc = document.getElementById('edit-prop-desc').value.trim();
+            const owner = document.getElementById('edit-prop-owner').value.trim();
+            const isFinal = document.getElementById('edit-prop-isfinal').checked;
+
+            if (!title) {
+                alert('請填寫聚會標題！');
+                return;
+            }
+
+            const btn = document.getElementById('btn-save-proposal-edit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+            try {
+                await updateDoc(doc(db, 'proposals', id), {
+                    title: title,
+                    desc: desc,
+                    owner: owner,
+                    isFinal: isFinal,
+                    updatedAt: serverTimestamp()
+                });
+                closeModal('edit-proposal-modal');
+                showStatus('✨ 提案已成功更新！', 3000);
+            } catch (err) {
+                alert('更新提案失敗：' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>儲存修改</span>';
+            }
+        }
+
+        async function deleteProposal(id) {
+            if (!currentUser || !isUserApproved) return;
+            const prop = appData.proposals.find(p => p.id === id);
+            const title = prop ? prop.title : '此提案';
+
+            if (!confirm(`確定要刪除「${title}」嗎？刪除後無法復原。`)) {
+                return;
+            }
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在刪除提案...', 0);
+                await deleteDoc(doc(db, 'proposals', id));
+                showStatus('🗑️ 提案已成功刪除！', 3000);
+            } catch (err) {
+                alert('刪除提案失敗：' + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        function deleteProposalFromEditModal() {
+            const id = document.getElementById('edit-prop-id').value;
+            if (!id) return;
+            closeModal('edit-proposal-modal');
+            deleteProposal(id);
+        }
+
+        async function deleteRecord(id) {
+            if (!currentUser || !isUserApproved) return;
+            if (!confirm('確定要刪除此筆相片/素材紀錄嗎？刪除後無法復原。')) return;
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在刪除紀錄...', 0);
+                await deleteDoc(doc(db, 'records', id));
+                showStatus('🗑️ 紀錄已成功刪除！', 3000);
+            } catch (err) {
+                alert('刪除紀錄失敗：' + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        async function deleteUpdate(id) {
+            if (!currentUser || !isUserApproved) return;
+            if (!confirm('確定要刪除此筆日常動態嗎？刪除後無法復原。')) return;
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在刪除動態...', 0);
+                await deleteDoc(doc(db, 'updates', id));
+                showStatus('🗑️ 動態已成功刪除！', 3000);
+            } catch (err) {
+                alert('刪除動態失敗：' + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        // ==================== 許願池邏輯 (Wishes) ====================
+        async function submitWish() {
+            if (!currentUser || !isUserApproved) return;
+            const title = document.getElementById('wish-title').value.trim();
+            const desc = document.getElementById('wish-desc').value.trim();
+            if (!title) { alert('請填寫願望標題！'); return; }
+
+            const btn = document.getElementById('btn-submit-wish');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 送出中...';
+
+            try {
+                await addDoc(collection(db, 'wishes'), {
+                    title: title,
+                    desc: desc,
+                    author: currentUser.displayName || '小組成員',
+                    authorPhoto: currentUser.photoURL || '',
+                    authorUid: currentUser.uid,
+                    status: 'pending',
+                    likes: [currentUser.uid], // 許願發起人自動附議 1 票
+                    adminNote: '',
+                    date: getTodayDate(),
+                    createdAt: serverTimestamp()
+                });
+                closeModal('wish-modal');
+                showStatus('✨ 願望已成功許下！大家一起來集氣吧～', 3500);
+            } catch (err) {
+                alert("許願失敗：" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>送出許願</span>';
+            }
+        }
+
+        async function likeWish(id) {
+            if (!currentUser || !isUserApproved) return;
+            const wish = appData.wishes.find(w => w.id === id);
+            if (!wish) return;
+
+            const likes = Array.isArray(wish.likes) ? [...wish.likes] : [];
+            const idx = likes.indexOf(currentUser.uid);
+            if (idx > -1) {
+                likes.splice(idx, 1);
+            } else {
+                likes.push(currentUser.uid);
+            }
+
+            try {
+                await updateDoc(doc(db, 'wishes', id), { likes });
+            } catch (err) {
+                alert("集氣失敗：" + err.message);
+            }
+        }
+
+        function openAdminWishModal(id) {
+            if (!isUserAdmin) return;
+            const wish = appData.wishes.find(w => w.id === id);
+            if (!wish) return;
+
+            document.getElementById('admin-wish-id').value = id;
+            document.getElementById('admin-wish-status').value = wish.status || 'pending';
+            document.getElementById('admin-wish-note').value = wish.adminNote || '';
+            openModal('admin-wish-modal');
+        }
+
+        async function saveAdminWishStatus() {
+            if (!isUserAdmin) return;
+            const id = document.getElementById('admin-wish-id').value;
+            const status = document.getElementById('admin-wish-status').value;
+            const adminNote = document.getElementById('admin-wish-note').value.trim();
+
+            const btn = document.getElementById('btn-save-admin-wish');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+
+            try {
+                await updateDoc(doc(db, 'wishes', id), {
+                    status: status,
+                    adminNote: adminNote,
+                    updatedAt: serverTimestamp()
+                });
+                closeModal('admin-wish-modal');
+                showStatus('✨ 願望進度已成功更新！', 3000);
+            } catch (err) {
+                alert("更新失敗：" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '儲存進度';
+            }
+        }
+
+        async function deleteWish(id) {
+            if (!currentUser || !isUserApproved) return;
+            const wish = appData.wishes.find(w => w.id === id);
+            const title = wish ? wish.title : '此願望';
+
+            if (!confirm(`確定要刪除願望「${title}」嗎？刪除後無法復原。`)) return;
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在刪除願望...', 0);
+                await deleteDoc(doc(db, 'wishes', id));
+                showStatus('🗑️ 願望已成功刪除！', 3000);
+            } catch (err) {
+                alert("刪除失敗：" + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        // 相片上傳至 Storage
+        let selectedPhotoFile = null;
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            const previewBox = document.getElementById('photo-preview-box');
+            const previewImg = document.getElementById('photo-preview-img');
+            const captionPreview = document.getElementById('photo-preview-caption');
+            const captionInput = document.getElementById('photo-text');
+
+            if (file) {
+                selectedPhotoFile = file;
+                previewImg.src = URL.createObjectURL(file);
+                captionPreview.innerText = captionInput.value || '✨ 預覽拍立得';
+                previewBox.classList.remove('hidden');
+            } else {
+                selectedPhotoFile = null;
+                previewBox.classList.add('hidden');
+            }
+        }
+
+        function updatePhotoCaptionPreview(val) {
+            const el = document.getElementById('photo-preview-caption');
+            if (el) el.innerText = val || '✨ 預覽拍立得';
+        }
+
+        async function submitPhoto() {
+            if (!currentUser || !isUserApproved) return;
+            const fileInput = document.getElementById('photo-file');
+            const file = fileInput.files[0] || selectedPhotoFile;
+            const text = document.getElementById('photo-text').value.trim() || '美好回憶 📸';
+
+            if (!file) { alert('請先選取一張照片圖檔！'); return; }
+
+            const btn = document.getElementById('btn-submit-photo');
+            const btnText = document.getElementById('btn-submit-photo-text');
+            btn.disabled = true;
+            btnText.innerText = '上傳檔案中...';
+
+            try {
+                showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在上傳照片到 Firebase Cloud Storage...', 0);
+                const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const fileRef = ref(storage, `photos/${Date.now()}_${safeName}`);
+                const snapshot = await uploadBytes(fileRef, file);
+                const downloadUrl = await getDownloadURL(snapshot.ref);
+
+                await addDoc(collection(db, 'records'), {
+                    type: 'photo',
+                    url: downloadUrl,
+                    text: text,
+                    author: currentUser.displayName || '小組成員',
+                    authorPhoto: currentUser.photoURL || '',
+                    authorUid: currentUser.uid,
+                    date: getTodayDate(),
+                    createdAt: serverTimestamp()
+                });
+
+                closeModal('photo-modal');
+                showStatus('📸 照片已成功上傳並貼上相片牆！', 3500);
+            } catch (err) {
+                alert("相片上傳失敗：" + err.message + "\n（請確認 Storage 安全性規則已設定允許核可成員上傳）");
+                document.getElementById('status-bar').classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = '上傳並貼上';
+            }
+        }
+
+        async function submitMaterial() {
+            if (!currentUser || !isUserApproved) return;
+            const title = document.getElementById('mat-title').value.trim();
+            const url = document.getElementById('mat-url').value.trim();
+            if (!title || !url) { alert('請填寫素材標題與連結網址！'); return; }
+
+            const btn = document.getElementById('btn-submit-material');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 新增中...';
+
+            try {
+                await addDoc(collection(db, 'records'), {
+                    type: 'material',
+                    text: title,
+                    url: url,
+                    author: currentUser.displayName || '小組成員',
+                    authorPhoto: currentUser.photoURL || '',
+                    authorUid: currentUser.uid,
+                    date: getTodayDate(),
+                    createdAt: serverTimestamp()
+                });
+
+                closeModal('material-modal');
+                showStatus('📎 素材已成功新增！', 3000);
+            } catch (err) {
+                alert("新增素材失敗：" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '新增素材';
+            }
+        }
+
+        async function submitUpdate() {
+            if (!currentUser || !isUserApproved) return;
+            const text = document.getElementById('upd-text').value.trim();
+            const fileInput = document.getElementById('upd-file');
+            const file = fileInput.files ? fileInput.files[0] : null;
+
+            if (!text && !file) { alert('請寫點新鮮事或選取一張照片吧！'); return; }
+
+            const btn = document.getElementById('btn-submit-update');
+            const btnText = document.getElementById('btn-submit-update-text');
+            btn.disabled = true;
+            btnText.innerText = file ? '上傳附圖中...' : '發佈中...';
+
+            try {
+                let imgUrl = '';
+                if (file) {
+                    showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在上傳動態附圖...', 0);
+                    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                    const fileRef = ref(storage, `updates/${Date.now()}_${safeName}`);
+                    const snapshot = await uploadBytes(fileRef, file);
+                    imgUrl = await getDownloadURL(snapshot.ref);
+                }
+
+                await addDoc(collection(db, 'updates'), {
+                    text: text,
+                    imgUrl: imgUrl,
+                    author: currentUser.displayName || '小組成員',
+                    authorPhoto: currentUser.photoURL || '',
+                    authorUid: currentUser.uid,
+                    date: getTodayDate(),
+                    createdAt: serverTimestamp()
+                });
+
+                closeModal('update-modal');
+                showStatus('📝 動態已成功發佈！', 3000);
+            } catch (err) {
+                alert("發佈動態失敗：" + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = '發佈動態';
+            }
+        }
+
+        async function seedDefaultData() {
+            if (!currentUser || !isUserApproved) return;
+            const confirmed = confirm('確定要將過去的 16 個歷史提案寫入雲端 Firestore 嗎？');
+            if (!confirmed) return;
+
+            showStatus('<i class="fa-solid fa-spinner fa-spin"></i> 正在將 16 個歷史提案寫入 Firestore...', 0);
+            try {
+                for (const p of historicalProposals) {
+                    await addDoc(collection(db, 'proposals'), {
+                        ...p,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                showStatus('🎉 成功將歷史提案匯入雲端！', 4000);
+            } catch (err) {
+                alert("匯入失敗：" + err.message);
+                document.getElementById('status-bar').classList.add('hidden');
+            }
+        }
+
+        // ==================== 11. 介面切換與彈窗管理 ====================
+        function switchTab(tabId) {
+            ['proposals', 'records', 'updates', 'wishes'].forEach(id => {
+                const navBtn = document.getElementById(`nav-${id}`);
+                const mNavBtn = document.getElementById(`m-nav-${id}`);
+                const sec = document.getElementById(`sec-${id}`);
+
+                if (navBtn) {
+                    navBtn.classList.remove('active', 'text-ink');
+                    navBtn.classList.add('text-gray-500');
+                }
+                if (mNavBtn) {
+                    mNavBtn.classList.remove('text-morandi-dark', 'font-bold');
+                    mNavBtn.classList.add('text-gray-400');
+                }
+                if (sec) sec.style.display = (id === tabId) ? 'block' : 'none';
+            });
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('active', 'text-ink');
+                activeNav.classList.remove('text-gray-500');
+            }
+
+            const activeMNav = document.getElementById(`m-nav-${tabId}`);
+            if (activeMNav) {
+                activeMNav.classList.add('text-morandi-dark', 'font-bold');
+                activeMNav.classList.remove('text-gray-400');
+            }
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+            
+            const inputs = el.querySelectorAll('input:not([type="hidden"]), textarea');
+            inputs.forEach(input => input.value = '');
+
+            if (id === 'photo-modal') {
+                selectedPhotoFile = null;
+                const previewBox = document.getElementById('photo-preview-box');
+                const previewImg = document.getElementById('photo-preview-img');
+                if (previewBox) previewBox.classList.add('hidden');
+                if (previewImg) previewImg.src = '';
+            }
+        }
+
+        // ==================== 12. 掛載全域函式至 window ====================
+        window.switchTab = switchTab;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.loginWithGoogle = loginWithGoogle;
+        window.logout = logout;
+        window.applyForMembership = applyForMembership;
+        window.approveMember = approveMember;
+        window.rejectMember = rejectMember;
+        window.removeMember = removeMember;
+        window.submitProposal = submitProposal;
+        window.voteProposal = voteProposal;
+        window.addComment = addComment;
+        window.openFinalizeModal = openFinalizeModal;
+        window.confirmFinalize = confirmFinalize;
+        window.openEditProposalModal = openEditProposalModal;
+        window.saveProposalEdit = saveProposalEdit;
+        window.deleteProposal = deleteProposal;
+        window.deleteProposalFromEditModal = deleteProposalFromEditModal;
+        window.deleteRecord = deleteRecord;
+        window.deleteUpdate = deleteUpdate;
+        window.submitWish = submitWish;
+        window.likeWish = likeWish;
+        window.openAdminWishModal = openAdminWishModal;
+        window.saveAdminWishStatus = saveAdminWishStatus;
+        window.deleteWish = deleteWish;
+        window.filterWishes = filterWishes;
+        window.handlePhotoSelect = handlePhotoSelect;
+        window.updatePhotoCaptionPreview = updatePhotoCaptionPreview;
+        window.submitPhoto = submitPhoto;
+        window.submitMaterial = submitMaterial;
+        window.submitUpdate = submitUpdate;
+        window.seedDefaultData = seedDefaultData;
+    </script>
+</body>
+</html>
