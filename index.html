@@ -105,6 +105,14 @@
             backdrop-filter: blur(3px);
         }
         
+        .tab-btn {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab-btn:focus, .tab-btn:focus-visible {
+            outline: none !important;
+        }
+        
         .tab-btn.active {
             border-bottom: 4px solid #a3b19b;
             color: #4a433d;
@@ -1024,18 +1032,22 @@
             container.innerHTML = '';
 
             if (appData.proposals.length === 0) {
+                container.className = "w-full";
                 container.innerHTML = `
-                    <div class="col-span-full bg-white/70 border-2 border-dashed border-milktea rounded-2xl p-8 text-center my-4">
+                    <div class="w-full bg-white/85 border-2 border-dashed border-milktea rounded-3xl p-10 text-center my-6 shadow-sm">
                         <i class="fa-regular fa-lightbulb text-milktea text-4xl mb-3"></i>
                         <h3 class="text-lg font-bold text-ink">目前還沒有任何提案點子喔！</h3>
-                        <p class="text-sm text-gray-500 mt-1 mb-4">點擊上方「+ 新增提案」或是匯入既有的歷史手帳提案吧！</p>
-                        <button onclick="openModal('proposal-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2 rounded-full text-sm font-medium transition-colors">
-                            馬上提出第一個點子
+                        <p class="text-sm text-gray-500 mt-1 mb-5">點擊上方「+ 新增提案」或是匯入既有的歷史手帳提案吧！</p>
+                        <button onclick="openModal('proposal-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2.5 rounded-full text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>馬上提出第一個點子</span>
                         </button>
                     </div>
                 `;
                 return;
             }
+
+            container.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
 
             appData.proposals.forEach(prop => {
                 const isFinalBadge = prop.isFinal 
@@ -1110,15 +1122,22 @@
             container.innerHTML = '';
 
             if (appData.records.length === 0) {
+                container.className = "w-full";
                 container.innerHTML = `
-                    <div class="col-span-full bg-white/70 border-2 border-dashed border-morandi rounded-2xl p-8 text-center my-4">
+                    <div class="w-full bg-white/85 border-2 border-dashed border-morandi rounded-3xl p-10 text-center my-6 shadow-sm">
                         <i class="fa-solid fa-camera-retro text-morandi text-4xl mb-3"></i>
                         <h3 class="text-lg font-bold text-ink">相片牆還是空的唷！</h3>
-                        <p class="text-sm text-gray-500 mt-1 mb-4">點擊上方「+ 貼照片」，挑選照片貼上吧！</p>
+                        <p class="text-sm text-gray-500 mt-1 mb-5">點擊上方「+ 貼照片」，挑選照片貼上吧！</p>
+                        <button onclick="openModal('photo-modal')" class="bg-morandi hover:bg-morandi-dark text-white px-5 py-2.5 rounded-full text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>馬上貼第一張照片</span>
+                        </button>
                     </div>
                 `;
                 return;
             }
+
+            container.className = "masonry";
 
             appData.records.forEach((rec, index) => {
                 const rotation = (index % 2 === 0) ? ((index % 3) * 1.5 - 1.5) : (-1 * (index % 3) * 1.5 + 1);
