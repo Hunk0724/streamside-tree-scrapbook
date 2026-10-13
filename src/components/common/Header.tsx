@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
               <span>我們的手帳</span> <span className="text-milktea font-handwriting text-3xl">Scrapbook</span>
               <span className="text-[10px] bg-milktea/20 text-milktea-dark font-mono font-bold px-2 py-0.5 rounded-full border border-milktea/40">
-                v1.1.0
+                v1.1.1
               </span>
             </h1>
           </div>

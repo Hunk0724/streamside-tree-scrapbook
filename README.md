@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-v1.1.0-emerald?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.1.1-emerald?style=flat-square)
 ![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?style=flat-square&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8?style=flat-square&logo=tailwindcss)
@@ -12,7 +12,7 @@
 
 <br/>
 
-**凝聚聚會點子 · 定格歡笑片刻 · 傾聽夥伴心聲 · 專屬於成青小組的溫馨私密手帳空間**
+**專屬於成青小組的日常聚會與生活記錄協作平台**
 
 👉 **[立即進入手帳 (線上正式環境)](https://hunk0724.github.io/streamside-tree-scrapbook/)** 👈
 
@@ -20,70 +20,70 @@
 
 ---
 
-## 📖 專案願景 (Vision)
+## 📖 專案簡介 (Overview)
 
-「小組手帳」是一個專為成青小組設計的私密協作平台。設計初衷是為了讓組員們在忙碌的生活與工作中，擁有一個有溫度、視覺溫潤（莫蘭迪綠、奶茶色、拍立得、紙膠帶質感）的線上天地。
+「小組手帳」是成青小組內部使用的私密協作平台，提供聚會提案投票、活動照片與共用素材收納、生活小動態分享，以及組員功能許願池。
 
-在這裡，沒有繁雜的社交演算法，只有夥伴們的真心交流、聚會點子投票、活動相片紀錄以及持續進化的社群許願池。
+介面設計採用手帳剪貼風格（莫蘭迪色調、手寫字體、拍立得排版與紙膠帶視覺元素），搭配前端身分驗證與後端資料庫權限規則，確保小組內容的私密性與操作便利。
 
 ---
 
-## ✨ 核心特色與功能導覽 (Features)
+## ✨ 核心功能 (Features)
 
 ### 💡 1. 每月聚會提案板 (Proposals)
-- **提出新點子**：隨時發起聚會構想（如：秋季野餐、桌遊之夜、爬山踏青）。
-- **即時愛心投票**：組員可點擊愛心為喜歡的活動投票，即時計算得票排行。
-- **全員協同編輯**：每位核可組員皆可點擊「編輯/補充」，一起完善活動時間、地點與攜帶物品，並在卡片溫馨留存最後編輯者足跡（例如：`由 怡蓁 於 9/30 補充編輯`）。
-- **專屬討論區**：每張提案卡片內建討論串，隨時留言交換意見。
-- **最終定案標籤**：主責人或管理員可將獲勝方案設為「🌟 本月最終決定」。
+- **發起提案**：組員可隨時提出聚會構想（如野餐、桌遊之夜、踏青）。
+- **即時投票**：點擊愛心為喜歡的活動投票，依票數即時排序。
+- **全員協同編輯**：每位核可組員皆可編輯活動時間、地點與攜帶物品，卡片會保留最後編輯者資訊（例如：`由 怡蓁 於 9/30 補充編輯`）。
+- **提案討論串**：卡片內建留言區，供大家討論活動細節。
+- **定案標記**：管理員可將確定舉辦的方案標記為「🌟 本月最終決定」。
 
 ### 📸 2. 活動紀錄與素材牆 (Records)
-- **拍立得照片牆**：上傳聚會精彩瞬間，呈現手帳拍立得微傾斜隨機角度排版與手寫字體說明。
-- **圖檔直傳雲端**：內建 Firebase Cloud Storage 上傳通道，支援各類常見照片格式。
-- **共用素材與簡報**：可貼上聚會簡報、Google Drive 或共用文件外部連結，重要資源永不遺失。
-- **多功能篩選**：支援一鍵切換「全部顯示」、「📸 拍立得照片」與「📎 共用素材」。
+- **拍立得照片牆**：上傳聚會照片，以隨機角度微傾斜的拍立得卡片展示。
+- **雲端圖檔儲存**：串接 Firebase Cloud Storage，支援直接上傳常用照片格式。
+- **共用文件與素材**：支援貼上外部雲端硬碟或簡報連結，集中管理活動資源。
+- **分類篩選**：可依「全部顯示」、「📸 拍立得照片」與「📎 共用素材」切換檢視。
 
-### 📝 3. 日常小碎片 (Updates)
-- **生活隨手記**：分享日常工作近況、生活小感恩與代禱事項。
-- **圖文混排**：支援文字分享與可選相片附圖，溫馨紀錄小組點滴。
+### 📝 3. 日常動態 (Updates)
+- **生活隨手記**：分享日常近況、感恩小事或代禱事項。
+- **圖文混排**：支援純文字與附圖發佈，紀錄小組生活點滴。
 
 ### ✨ 4. 功能許願池 (Wishes & Feedback Loop)
-- **社群發起許願**：想要手帳增加什麼新功能？大家一起來許願！
-- **集氣點讚**：組員可對心儀的願望點擊「+1 集氣」，讓熱門需求優先被看見。
-- **生命週期透明化**：清晰展示願望狀態（💡 許願中 ➔ 🛠️ 實現中 ➔ 🎉 已實現）。
-- **🎉 功能上線日誌 (Release Notes)**：願望實現後，卡片會自動附上綠色改動摘要便條與版本號（如 `v1.1.0`），清楚知道該願望帶來了哪些功能改動。
-- **💬 體驗回饋留言串**：組員可在已實現的願望下方留言回饋使用感受，形成持續迭代閉環。
+- **功能許願**：組員可提出期望新增的手帳功能。
+- **集氣機制**：組員可針對想要的項目點擊「+1 集氣」，讓熱門需求優先排序。
+- **進度追蹤**：公開標示處理狀態（💡 許願中 ➔ 🛠️ 實現中 ➔ 🎉 已實現）。
+- **上線改動摘要**：願望實現後，卡片自動展示版本標籤（如 `v1.1.1`）與具體改動說明。
+- **體驗回饋**：組員可在願望卡片下方留言討論使用感受，維持持續改善機制。
 
-### 🛡️ 5. 私密隱私與門禁機制 (Security Gatekeeper)
-- **Google 帳號登入**：支援一鍵登入，防範匿名惡意機器人。
-- **零信任審核閘門**：新用戶登入後需向管理員送出加入申請，經管理員於專屬審核面板核可後方能解鎖完整手帳。
-- **即時通知聯動**：組員申請時自動非同步觸發 Google Apps Script (GAS) 郵件通知管理員。
+### 🛡️ 5. 存取權限與安全機制 (Security)
+- **Google OAuth 登入**：透過 Google 帳號驗證身分，避免未授權訪客存取。
+- **審核閘門**：初次登入的新使用者預設為待審核狀態，需由管理員於後台核可後方能存取完整手帳內容。
+- **資料庫權限邊界**：配置 Firestore Security Rules，在資料庫層限制只有管理員能修改審核狀態與角色，避免跳過前端審核自行提權。
+- **即時通知聯動**：組員送出申請時，透過 Google Apps Script Webhook 自動發送郵件通知管理員。
+- **環境變數隔離**：管理員信箱與通知 Webhook 皆抽離至環境變數，避免機敏資訊直接寫入前端原始碼或版本庫。
 
 ---
 
-## 🛠️ 技術架構與工程選型 (Tech Stack)
-
-本專案採用現代前端工程化架構，兼顧開發效率、型別安全、載入性能與維護性：
+## 🛠️ 技術架構 (Tech Stack)
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["現代前端層 (SPA)"]
-        A["React 18 + TypeScript"] --> B["Tailwind CSS (Morandi 溫潤手帳調)"]
-        B --> C["Vite 6 (極速 HMR & 打包)"]
-        C --> D["Rollup Vendor Chunk Splitting"]
+    subgraph Frontend["前端架構 (SPA)"]
+        A["React 18 + TypeScript 5.7"] --> B["Tailwind CSS 3.4 (Morandi 色系)"]
+        B --> C["Vite 6.2 (構建與熱重載)"]
+        C --> D["Rollup Chunk Splitting (React 與 Firebase 分包)"]
     end
 
-    subgraph Backend["雲端後端服務 (Serverless BaaS)"]
+    subgraph Backend["雲端服務 (Serverless BaaS)"]
         E["Firebase Authentication (Google OAuth)"]
-        F["Cloud Firestore (即時 NoSQL 資料庫)"]
-        G["Cloud Storage (圖檔物件儲存)"]
+        F["Cloud Firestore (即時資料庫與 Security Rules)"]
+        G["Cloud Storage (照片與檔案儲存)"]
         H["Google Apps Script (Webhook 郵件通知)"]
     end
 
-    subgraph DevOps["CI/CD 與自動化閉環"]
-        I["GitHub Actions (自動化 Pipeline)"]
-        J["GitHub Pages (全球 Edge CDN 分發)"]
-        K["Antigravity AI Agent Skill (.agents/skills)"]
+    subgraph DevOps["CI/CD 與自動化"]
+        I["GitHub Actions (自動型別檢查與建置)"]
+        J["GitHub Pages (靜態網站託管)"]
+        K["Antigravity Skill (.agents/skills)"]
     end
 
     Frontend <--> Backend
@@ -91,21 +91,19 @@ flowchart TD
     Backend <--> K
 ```
 
-- **前端核心**：React 18、TypeScript 5.7、Tailwind CSS 3.4
-- **建置工具**：Vite 6.2（配置手動分包：React 核心與 Firebase SDK 分離打包，加速快取）
-- **後端與儲存**：Firebase Auth、Cloud Firestore、Firebase Storage
-- **自動化部屬 (CI/CD)**：GitHub Actions（每次 push 觸發 `npm ci` ➔ `tsc` 型別檢查 ➔ `vite build` ➔ 自動發布至 GitHub Pages）
-- **AI 賦能閉環**：專案自帶 Antigravity Skill（`npm run check-wishes`），實現需求自動讀取與架構分析。
+- **前端**：React 18、TypeScript 5.7、Tailwind CSS 3.4
+- **建置工具**：Vite 6.2（設定 React 核心與 Firebase SDK 分離打包，提升快取利用率）
+- **後端服務**：Firebase Authentication、Cloud Firestore、Firebase Storage
+- **自動化部署**：GitHub Actions（每次推送 main 分支時執行 `npm ci` ➔ `tsc` 型別檢查 ➔ `vite build` ➔ 自動發布至 GitHub Pages）
+- **許願池檢索腳本**：專案內建命令（`npm run check-wishes`），便於快速檢查待處理的組員需求。
 
 ---
 
 ## 🚀 本地開發指南 (Local Development)
 
-若您想在自己的電腦上運行或參與手帳開發，請依照以下步驟：
-
-### 1. 前置需求
-- 安裝 [Node.js](https://nodejs.org/) (建議版本 v20 或 v22 以上)
-- 安裝 [Git](https://git-scm.com/)
+### 1. 環境需求
+- [Node.js](https://nodejs.org/) (建議 v20 或 v22 以上)
+- [Git](https://git-scm.com/)
 
 ### 2. 下載專案並安裝套件
 ```bash
@@ -115,56 +113,72 @@ git clone https://github.com/Hunk0724/streamside-tree-scrapbook.git
 # 進入專案目錄
 cd streamside-tree-scrapbook
 
-# 安裝依賴套件 (推薦使用 npm ci 確保版本完全一致)
+# 安裝依賴套件
 npm ci
 ```
 
-### 3. 啟動本機開發伺服器
+### 3. 設定本地環境變數
+```bash
+# 複製範本檔案為 .env.local
+cp .env.example .env.local
+```
+開啟 `.env.local` 並填入對應的設定值：
+- `VITE_ADMIN_EMAIL`：管理員 Google 帳號 Email
+- `VITE_NOTIFICATION_WEBHOOK_URL`：Google Apps Script 發信 Webhook 網址
+
+*(註：`.env.local` 與本地 `firestore.rules` 皆已加入 `.gitignore`，不會被推送到公開儲存庫)*
+
+### 4. 啟動開發伺服器
 ```bash
 npm run dev
 ```
-啟動後打開瀏覽器訪問：`http://localhost:3000/streamside-tree-scrapbook/` 即可進行即時熱重載（HMR）開發。
+啟動後打開瀏覽器訪問 `http://localhost:3000/streamside-tree-scrapbook/` 即可進行開發。
 
-### 4. 建置生產環境版本 (Build & Type Check)
+### 5. 生產環境建置與檢查
 ```bash
 npm run build
 ```
-會同時執行 `tsc`（TypeScript 嚴格型別檢查）與 `vite build`（生產代碼最小化打包）。
+會同時執行 TypeScript 嚴格型別檢查 (`tsc`) 與 Vite 生產打包 (`vite build`)。
 
-### 5. 執行 Agent 許願池檢索腳本
+### 6. 檢索許願池狀態
 ```bash
 npm run check-wishes
 ```
-可在終端機快速獲取最新待實現的組員願望清單。
+在終端機快速檢視組員最新發起與集氣中的願望清單。
 
 ---
 
-## 🤝 協作與貢獻準則 (Contribution & Rules)
+## 🤝 協作準則 (Collaboration Rules)
 
-本專案直接部署於生產環境，所有開發改動遵循嚴格的 [GEMINI.md](file:///d:/projects/river_tree_web/GEMINI.md) 協作紀律：
-1. **需求理解**：深入確認問題與目標。
-2. **方案評估**：提出可行架構與回滾方案。
-3. **決策確認**：動手前必須經由確認方可修改。
-4. **謹慎實作**：嚴守 TypeScript 型別定義與溫潤手帳視覺規範。
-5. **部署前驗證**：本地 `npm run build` 0 錯誤，並經授權後方能執行 `git push`。
+本專案直接部署至正式環境，開發流程遵循 [GEMINI.md](file:///d:/projects/river_tree_web/GEMINI.md) 規範：
+1. **需求理解**：確認改動目標與影響範圍。
+2. **方案評估**：動手前評估實作架構與復原方式。
+3. **決策確認**：提出方案後先經確認再行修改。
+4. **謹慎實作**：維持 TypeScript 型別嚴謹度與既有程式碼風格。
+5. **部署前驗證**：本地驗證通過，經授權後才執行 `git commit` 與 `git push`。
 
 ---
 
 ## 📜 版本發布歷史 (Release History)
 
+- **`v1.1.1` (2026-10-13)**：
+  - 🛡️ 修復 Firestore Security Rules 權限漏洞，在資料庫層禁止非管理員自行修改審核狀態與角色。
+  - 🔑 將管理員信箱與通知 Webhook 抽離為環境變數（`.env.local` / GitHub Secrets），降低原始碼暴露風險。
+  - 🧹 移除過期的舊版單檔 `index.legacy.html`，維持程式庫乾淨。
+  - 📝 更新本地開發說明，加入環境變數配置步驟。
 - **`v1.1.0` (2026-09-30)**：
   - ✨ 新增「提案全員協同編輯」功能，並留存最後編輯者足跡。
-  - 📝 許願池增加「功能上線改動摘要便條」與「版本標籤 (Version Tag)」。
-  - 💬 許願池開放「組員使用體驗回饋留言串」。
+  - 📝 許願池增加「功能上線改動摘要」與「版本標籤」。
+  - 💬 許願池開放「使用體驗回饋留言串」。
   - 🤖 建立專案專屬 Antigravity Skill (`.agents/skills/check-wishes`)。
-  - 🏷️ 正式導入專案語意化版本號（SemVer）。
+  - 🏷️ 導入專案語意化版本號（SemVer）。
 - **`v1.0.0` (2026-09-30)**：
-  - 🏗️ 完成現代化架構重構（由 2,200 行傳統 HTML 遷移至 Vite + React + TypeScript + Tailwind CSS）。
+  - 🏗️ 完成現代化架構遷移（由單檔 HTML 重構為 Vite + React + TypeScript + Tailwind CSS）。
   - 🚀 建立 GitHub Actions CI/CD 自動化建置與 GitHub Pages 部署流程。
-  - 🛡️ 實作零信任會員審核系統與 Firebase 規則保護。
+  - 🛡️ 實作成員審核系統與 Firebase 基礎規則防護。
 
 ---
 
 <div align="center">
-  <p>🌿 成青小組的小手帳 · 讓小組的每一天都更加美好 ✨</p>
+  <p>🌿 成青小組的小手帳 · 記錄小組的日常與聚會點滴</p>
 </div>
