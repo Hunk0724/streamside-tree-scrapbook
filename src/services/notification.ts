@@ -1,4 +1,4 @@
-const NOTIFICATION_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCSo7sMGuQimiRs4UN72A1l8KzeAKI2JxRprxV_93LZRxm2hxwc-SBfCxcol_nUTQ/exec";
+const NOTIFICATION_WEBHOOK_URL = import.meta.env.VITE_NOTIFICATION_WEBHOOK_URL || "";
 
 export interface NotificationPayload {
   applicantName: string;
