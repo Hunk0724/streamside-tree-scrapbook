@@ -18,12 +18,14 @@ build/
 .env.test.local
 .env.production.local
 
-# Firebase Service Account Private Keys
+# Firebase Service Account Private Keys & Security Rules
 *serviceAccountKey*.json
 *-firebase-adminsdk-*.json
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
+firestore.rules
+storage.rules
 
 # Logs
 logs/
