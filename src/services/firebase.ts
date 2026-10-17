@@ -21,4 +21,4 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "";
+export const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "hunk123321123@gmail.com";

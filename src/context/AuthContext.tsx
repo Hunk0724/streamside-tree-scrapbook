@@ -31,7 +31,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const isUserAdmin = currentUser?.email === ADMIN_EMAIL;
+  const isUserAdmin = Boolean(
+    (currentUser?.email && ADMIN_EMAIL && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) ||
+    memberRecord?.role === 'admin'
+  );
   const isUserApproved = isUserAdmin || memberRecord?.status === 'approved';
 
   const showToast = (msg: string, duration = 3000) => {
@@ -52,7 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 若為 Super Admin，自動寫入並確保核准
-      if (user.email === ADMIN_EMAIL) {
+      const isSuperAdminEmail = Boolean(user.email && ADMIN_EMAIL && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+      if (isSuperAdminEmail) {
         try {
           await setDoc(doc(db, 'members', user.uid), {
             email: user.email,

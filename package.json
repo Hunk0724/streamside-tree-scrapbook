@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "check-wishes": "node scripts/check-wishes.mjs"
+    "check-wishes": "node scripts/check-wishes.mjs",
+    "verify": "node scripts/verify-delivery.mjs"
   },
   "dependencies": {
     "firebase": "^11.4.0",
